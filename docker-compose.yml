@@ -1,6 +1,4 @@
 # Orquestador de PostgreSQL y FastAPI
-version: '3.8'
-
 services:
   api:
     build: ./backend
@@ -26,6 +24,7 @@ services:
       - POSTGRES_DB=vitalrisk_db
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql  # Inyecta el script de inicio
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U vitalrisk_user -d vitalrisk_db"]
       interval: 5s
