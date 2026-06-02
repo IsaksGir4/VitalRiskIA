@@ -1,0 +1,36 @@
+# Orquestador de PostgreSQL y FastAPI
+version: '3.8'
+
+services:
+  api:
+    build: ./backend
+    container_name: vitalrisk_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app  # Sincroniza el código local con el contenedor en tiempo real
+    environment:
+      - DATABASE_URL=postgresql://vitalrisk_user:vitalrisk_password@db:5432/vitalrisk_db
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgis/postgis:14-3.3
+    container_name: vitalrisk_db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=vitalrisk_user
+      - POSTGRES_PASSWORD=vitalrisk_password
+      - POSTGRES_DB=vitalrisk_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vitalrisk_user -d vitalrisk_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata: # Volumen persistente para que los datos no se borren si el contenedor se apaga
