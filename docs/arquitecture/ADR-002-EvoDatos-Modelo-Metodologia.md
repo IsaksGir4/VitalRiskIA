@@ -38,54 +38,61 @@ El siguiente diagrama ilustra la evolución de la ingesta y transformación de d
 
 ```mermaid
 graph TD
-    %% ZONA BRONCE: Fuentes de Datos Crudos
-    subgraph Fuentes de Datos (Raw / Zona Bronce)
-        A1[SIATA - Dataset Unificado / API Contingencia IDEAM]
-        A2[DANE - DIVIPOLA GeoJSON]
-        A3[DANE - Proyecciones Población]
-        A4[INS - Histórico SIVIGILA IRA]
-        A5[Gobernación - ECV Antioquia]
-    end
 
-    %% ZONA PLATA: ASUM-ML Análisis
-    subgraph Entorno de Descubrimiento (Jupyter Notebooks)
-        B1(01_exploracion_IRA_ESI.ipynb)
-        B2(02_exploracion_clima_ideam_siata.ipynb)
-        B3(03_exploracion_dane_geometria.ipynb)
-    end
+subgraph BRONCE["Fuentes de Datos - Raw / Zona Bronce"]
+    A1["SIATA - Dataset Unificado / API Contingencia IDEAM"]
+    A2["DANE - DIVIPOLA GeoJSON"]
+    A3["DANE - Proyecciones Poblacion"]
+    A4["INS - Historico SIVIGILA IRA"]
+    A5["Gobernacion - ECV Antioquia"]
+end
 
-    %% ZONA ORO: ETL Productivo
-    subgraph Pipeline ETL (Python Scripts)
-        C1[Extract: request & batch download]
-        C2[Transform: merge, clean, winsorize]
-        C3[Load: SQLAlchemy to PostGIS]
-        C1 --> C2 --> C3
-    end
+subgraph EDA["Entorno de Descubrimiento - Jupyter Notebooks"]
+    B1["01_exploracion_IRA_ESI.ipynb"]
+    B2["02_exploracion_clima_ideam_siata.ipynb"]
+    B3["03_exploracion_dane_geometria.ipynb"]
+end
 
-    %% Persistencia Base de Datos Completa
-    subgraph Feature Store (PostGIS)
-        D1[(dim_municipios)]
-        D2[(dim_estaciones_aire)]
-        D3[(dim_poblacion_anual)]
-        D4[(fact_calidad_aire)]
-        D5[(fact_eventos_ira)]
-        D6[(fact_riesgo_territorial)]
-        D7[(alertas_territoriales)]
-    end
+subgraph ETL["Pipeline ETL - Python Scripts"]
+    C1["Extract: request & batch download"]
+    C2["Transform: merge, clean, winsorize"]
+    C3["Load: SQLAlchemy to PostGIS"]
+    C1 --> C2 --> C3
+end
 
-    %% Relaciones
-    A1 & A2 & A3 & A4 & A5 -->|Ingesta Exploratoria| B1
-    A1 & A2 & A3 & A4 & A5 -->|Ingesta Automatizada| C1
-    
-    B1 & B2 & B3 -.->|Refactorización de Código| C2
-    
-    C3 -->|SQL Insert/Upsert| D1
-    C3 -->|SQL Insert/Upsert| D2
-    C3 -->|SQL Insert/Upsert| D3
-    C3 -->|SQL Insert/Upsert| D4
-    C3 -->|SQL Insert/Upsert| D5
-    C3 -->|SQL Insert/Upsert| D6
-    C3 -->|SQL Insert/Upsert| D7
+subgraph STORE["Feature Store - PostGIS"]
+    D1["dim_municipios"]
+    D2["dim_estaciones_aire"]
+    D3["dim_poblacion_anual"]
+    D4["fact_calidad_aire"]
+    D5["fact_eventos_ira"]
+    D6["fact_riesgo_territorial"]
+    D7["alertas_territoriales"]
+end
+
+A1 -->|Ingesta Exploratoria| B1
+A2 -->|Ingesta Exploratoria| B1
+A3 -->|Ingesta Exploratoria| B1
+A4 -->|Ingesta Exploratoria| B1
+A5 -->|Ingesta Exploratoria| B1
+
+A1 -->|Ingesta Automatizada| C1
+A2 -->|Ingesta Automatizada| C1
+A3 -->|Ingesta Automatizada| C1
+A4 -->|Ingesta Automatizada| C1
+A5 -->|Ingesta Automatizada| C1
+
+B1 -.->|Refactorizacion de Codigo| C2
+B2 -.->|Refactorizacion de Codigo| C2
+B3 -.->|Refactorizacion de Codigo| C2
+
+C3 -->|SQL Insert/Upsert| D1
+C3 -->|SQL Insert/Upsert| D2
+C3 -->|SQL Insert/Upsert| D3
+C3 -->|SQL Insert/Upsert| D4
+C3 -->|SQL Insert/Upsert| D5
+C3 -->|SQL Insert/Upsert| D6
+C3 -->|SQL Insert/Upsert| D7
 ```
 ## 4. Consecuencias
 **Positivas:** El equipo tiene un límite claro entre experimentación (Jupyter) y producción (Scripts). Las tablas de la base de datos están alineadas exactamente con la infraestructura aprovisionada. El riesgo de exceder el límite de datasets está mitigado.
