@@ -1,1 +1,9 @@
 # Archivos a ignorar en Github (ej. entornos virtuales)
+.env
+__pycache__/
+data/raw/
+
+*.pdf
+*.xlsx
+*.csv
+*.docx
