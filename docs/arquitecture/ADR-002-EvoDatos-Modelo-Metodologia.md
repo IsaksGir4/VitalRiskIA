@@ -74,8 +74,10 @@ subgraph STORE["Feature Store - PostGIS"]
     D7["alertas_territoriales"]
 end
 
-A1 -->|Ingesta Exploratoria| B1
-A2 -->|Ingesta Exploratoria| B1
+A1 -->|Ingesta Exploratoria| B2
+A2 -->|Ingesta Exploratoria| B2
+A1 -->|Ingesta Exploratoria| B3
+A2 -->|Ingesta Exploratoria| B3
 A3 -->|Ingesta Exploratoria| B1
 A4 -->|Ingesta Exploratoria| B1
 A5 -->|Ingesta Exploratoria| B1
