@@ -1,8 +1,12 @@
 # ADR 002: Evolución del Ecosistema de Datos, Modelado PostGIS y Metodología ASUM-ML
+
 **Fecha:** 13 de Junio de 2026
+
 **Estado:** Aceptado
+
 **Autores:** Equipo de Desarrollo VitalRisk AI
-**Relación:** Complementa a ADR 001 (Arquitectura Base) y ADR 002 (CRISP-ML).
+
+**Relación:** Complementa a ADR 001 (Arquitectura Base)
 
 ## 1. Contexto
 Durante el Sprint 2 del proyecto VitalRisk AI, la complejidad de las fuentes de datos ha aumentado significativamente. Pasamos de 3 fuentes genéricas a más de 10 fuentes específicas (que incluyen mediciones horarias del IDEAM, proyecciones poblacionales y datos socioeconómicos de la Encuesta de Calidad de Vida de Antioquia). Adicionalmente, necesitamos establecer un flujo de trabajo claro que separe la **exploración científica (EDA)** de la **automatización productiva (ETL).**
