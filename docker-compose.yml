@@ -17,12 +17,13 @@ services:
     image: postgis/postgis:14-3.3
     container_name: vitalrisk_db
     ports:
-      - "5432:5432"
+      - "5433:5432"
     environment:
       # Docker Compose lee automáticamente el archivo .env
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_HOST_AUTH_METHOD=trust
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
