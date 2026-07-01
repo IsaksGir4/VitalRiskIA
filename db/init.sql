@@ -239,6 +239,7 @@ CREATE TABLE IF NOT EXISTS alertas_territoriales (
     desviacion_pct    NUMERIC(6,2),  -- (prediccion - media) / media * 100
     variable_causal   VARCHAR(50),   -- feature más importante según XGBoost Feature Importance
     activa            BOOLEAN        DEFAULT TRUE
+    UNIQUE (codigo_dane, anio, semana_epi)
 );
 
 -- ============================================================

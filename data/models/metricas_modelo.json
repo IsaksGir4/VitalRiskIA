@@ -1,0 +1,62 @@
+{
+  "features": [
+    "media_hist_mun_sem",
+    "casos_ira_total",
+    "casos_ira_lag1",
+    "humedad_avg",
+    "desviacion_vs_historico",
+    "pm25_lag1",
+    "pm25_avg",
+    "icv_seg_social",
+    "icv_score",
+    "ipm_pct",
+    "semana_sin",
+    "semana_cos"
+  ],
+  "mejores_params": {
+    "max_depth": 3,
+    "learning_rate": 0.05,
+    "n_estimators": 200,
+    "subsample": 1.0,
+    "colsample_bytree": 0.8
+  },
+  "metricas_test": {
+    "rmse": 1.73989635399996,
+    "mae": 1.0294524431228638,
+    "r2": 0.6068674325942993,
+    "rmse_naive": 2.07630164008498,
+    "mejora_vs_naive_pct": 16.20213939970936
+  },
+  "split": {
+    "train": "2018-2020",
+    "val": "2021",
+    "test": "2022-2023"
+  },
+  "feature_importance": {
+    "casos_ira_lag1": 0.3881029784679413,
+    "casos_ira_total": 0.35978108644485474,
+    "icv_seg_social": 0.04849847033619881,
+    "media_hist_mun_sem": 0.04767294600605965,
+    "humedad_avg": 0.032423682510852814,
+    "semana_sin": 0.028462013229727745,
+    "semana_cos": 0.02838706038892269,
+    "desviacion_vs_historico": 0.024752488359808922,
+    "pm25_lag1": 0.02171393856406212,
+    "pm25_avg": 0.018084010109305382,
+    "icv_score": 0.0021212862338870764,
+    "ipm_pct": 0.0
+  },
+  "cv_temporal": {
+    "rmse_por_fold": [
+      4.430622577667236,
+      1.032874345779419,
+      1.1464570760726929,
+      0.2886068522930145,
+      2.675053358078003
+    ],
+    "rmse_medio": 1.914722841978073,
+    "rmse_std": 1.4778360019280226,
+    "mejora_vs_naive_pct": 7.78204837811012,
+    "interpretacion": "Alta varianza entre folds es esperada en datos epidemiológicos con cambios de régimen (pandemia). RMSE test 2022-2023 es la métrica más representativa para producción post-pandemia."
+  }
+}

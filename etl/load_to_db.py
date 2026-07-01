@@ -59,7 +59,7 @@ def cargar_tabla(df, tabla, llave_unica, engine, chunksize=500):
     print(f"  ✓ {tabla}: {len(df):,} filas cargadas")
 
 # ── 1. dim_municipios (primero — todas las FK dependen de esto) ──
-print("\n[1/5] Cargando dim_municipios...")
+print("\n[1/7] Cargando dim_municipios...")
 gdf = gpd.read_file(PROCESSED / "clean_municipios.geojson")
 
 # Preparar columnas que coinciden con init.sql v4
@@ -100,7 +100,7 @@ with engine.begin() as conn:
 print("  ✓ dim_municipios: geometrías actualizadas")
 
 # ── 2. dim_poblacion_anual ─────────────────────────────────
-print("\n[2/5] Cargando dim_poblacion_anual...")
+print("\n[2/7] Cargando dim_poblacion_anual...")
 df_pob = pd.read_csv(PROCESSED / "clean_poblacion_anual.csv",
                      dtype={'codigo_dane': str})
 df_pob['codigo_dane'] = df_pob['codigo_dane'].str.zfill(5)
@@ -109,7 +109,7 @@ cargar_tabla(df_pob, 'dim_poblacion_anual',
              ['codigo_dane', 'anio'], engine)
 
 # ── 3. fact_calidad_aire ───────────────────────────────────
-print("\n[3/5] Cargando fact_calidad_aire...")
+print("\n[3/7] Cargando fact_calidad_aire...")
 df_clima = pd.read_csv(PROCESSED / "clean_calidad_aire.csv",
                        dtype={'codigo_dane': str})
 df_clima['codigo_dane'] = df_clima['codigo_dane'].str.zfill(5)
@@ -124,7 +124,7 @@ cargar_tabla(df_clima_bd, 'fact_calidad_aire',
              ['codigo_dane', 'anio', 'semana_epi'], engine)
 
 # ── 4. fact_eventos_ira ────────────────────────────────────
-print("\n[4/5] Cargando fact_eventos_ira...")
+print("\n[4/7] Cargando fact_eventos_ira...")
 df_ira = pd.read_csv(PROCESSED / "clean_ira_2018_2023.csv",
                      dtype={'codigo_dane': str})
 df_ira['codigo_dane'] = df_ira['codigo_dane'].str.zfill(5)
@@ -144,7 +144,7 @@ cargar_tabla(df_ira[cols_ok], 'fact_eventos_ira',
              ['codigo_dane', 'anio', 'semana_epi'], engine)
 
 # ── 5. fact_riesgo_territorial ─────────────────────────────
-print("\n[5/5] Cargando fact_riesgo_territorial...")
+print("\n[5/7] Cargando fact_riesgo_territorial...")
 df_feat = pd.read_csv(PROCESSED / "fact_riesgo_territorial.csv",
                       dtype={'codigo_dane': str})
 df_feat['codigo_dane'] = df_feat['codigo_dane'].str.zfill(5)
@@ -178,12 +178,79 @@ cols_ok = [c for c in COLS_FEAT_BD if c in df_feat.columns]
 cargar_tabla(df_feat[cols_ok], 'fact_riesgo_territorial',
              ['codigo_dane', 'anio', 'semana_epi'], engine)
 
+# Agregar al final de load_to_db.py — actualizar ipt_score y nivel_riesgo
+print("\n[6/7] Actualizando ipt_score y nivel_riesgo en fact_riesgo_territorial...")
+df_ipt = pd.read_csv(PROCESSED / "fact_riesgo_territorial_ipt.csv",
+                     dtype={'codigo_dane': str})
+df_ipt['codigo_dane'] = df_ipt['codigo_dane'].str.zfill(5)
+
+with engine.begin() as conn:
+    for _, row in df_ipt[['codigo_dane','anio','semana_epi',
+                           'ipt_score','nivel_riesgo']].iterrows():
+        conn.execute(text("""
+            UPDATE fact_riesgo_territorial
+            SET ipt_score   = :ipt,
+                nivel_riesgo = :nivel
+            WHERE codigo_dane = :cod
+              AND anio        = :anio
+              AND semana_epi  = :sem
+        """), {
+            "ipt":   float(row['ipt_score']) if pd.notna(row['ipt_score']) else None,
+            "nivel": row['nivel_riesgo'] if pd.notna(row['nivel_riesgo']) else None,
+            "cod":   row['codigo_dane'],
+            "anio":  int(row['anio']),
+            "sem":   int(row['semana_epi'])
+        })
+
+print("  ✓ ipt_score y nivel_riesgo actualizados en PostGIS")
+
+# ── [7/7] Cargando alertas_territoriales ──────────────────
+print("\n[7/7] Cargando alertas_territoriales...")
+df_alt = pd.read_csv(PROCESSED / "alertas_territoriales.csv",
+                     dtype={'codigo_dane': str})
+df_alt['codigo_dane'] = df_alt['codigo_dane'].str.zfill(5)
+
+with engine.begin() as conn:
+    for _, row in df_alt.iterrows():
+        conn.execute(text("""
+            INSERT INTO alertas_territoriales
+                (codigo_dane, anio, semana_epi, nivel_alerta,
+                 prediccion_casos, desviacion_pct,
+                 variable_causal, media_historica, fecha_generacion)
+            VALUES
+                (:cod, :anio, :sem, :nivel,
+                 :pred, :desv, :var_causal, :media_hist, NOW())
+            ON CONFLICT (codigo_dane, anio, semana_epi)
+            DO UPDATE SET
+                nivel_alerta     = EXCLUDED.nivel_alerta,
+                prediccion_casos = EXCLUDED.prediccion_casos,
+                desviacion_pct   = EXCLUDED.desviacion_pct,
+                variable_causal  = EXCLUDED.variable_causal,
+                media_historica  = EXCLUDED.media_historica,
+                fecha_generacion = NOW()
+        """), {
+            "cod":       row['codigo_dane'],
+            "anio":      int(row['anio']),
+            "sem":       int(row['semana_epi']),
+            "nivel":     row['nivel_alerta'],
+            "pred":      float(row['prediccion_casos_t1']),
+            "desv":      float(row['desviacion_prediccion_pct']),
+            "var_causal":row['variable_causal'],
+            "media_hist":float(row['media_hist_mun_sem'])
+                         if pd.notna(row['media_hist_mun_sem']) else None,
+        })
+
+with engine.connect() as conn:
+    n = conn.execute(
+        text("SELECT COUNT(*) FROM alertas_territoriales")).scalar()
+print(f"  ✓ alertas_territoriales: {n:,} filas cargadas")
+
 # ── Verificación final ─────────────────────────────────────
 print("\n=== VERIFICACIÓN FINAL EN POSTGIS ===")
 with engine.connect() as conn:
     tablas = ['dim_municipios', 'dim_poblacion_anual',
               'fact_calidad_aire', 'fact_eventos_ira',
-              'fact_riesgo_territorial']
+              'fact_riesgo_territorial', 'alertas_territoriales']
     for t in tablas:
         n = conn.execute(text(f"SELECT COUNT(*) FROM {t}")).scalar()
         print(f"  {t}: {n:,} filas")
