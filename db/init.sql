@@ -238,7 +238,7 @@ CREATE TABLE IF NOT EXISTS alertas_territoriales (
     media_historica   NUMERIC(8,2),  -- promedio histórico mismo municipio-semana (sin pandemia)
     desviacion_pct    NUMERIC(6,2),  -- (prediccion - media) / media * 100
     variable_causal   VARCHAR(50),   -- feature más importante según XGBoost Feature Importance
-    activa            BOOLEAN        DEFAULT TRUE
+    activa            BOOLEAN        DEFAULT TRUE,
     UNIQUE (codigo_dane, anio, semana_epi)
 );
 

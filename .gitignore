@@ -7,3 +7,5 @@ data/raw/
 *.xlsx
 *.csv
 *.docx
+*.jpg
+*.png

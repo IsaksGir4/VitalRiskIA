@@ -1,0 +1,229 @@
+/* ══════════════════════════════════════════════════
+   VitalRisk AI — Design System v3
+   Tema CLARO forzado · Contraste AAA sidebar
+   ══════════════════════════════════════════════════ */
+
+/* ── Reset Streamlit ── */
+.block-container {
+    padding-top: 1rem !important;
+    max-width: 100% !important;
+}
+#MainMenu { visibility: hidden; }
+footer    { visibility: hidden; }
+
+/* ── Tokens ── */
+:root {
+    --bg:           #F7F8FA;
+    --surface:      #FFFFFF;
+    --border:       #E2E8F0;
+    --primary:      #1A5F7A;
+    --primary-soft: #E8F4F8;
+    --text:         #1A2332;
+    --text-muted:   #64748B;
+    --alert-ok:      #16A34A;
+    --alert-ok-soft: #F0FDF4;
+    --alert-warn:    #D97706;
+    --alert-warn-soft:#FFFBEB;
+    --alert-danger:  #DC2626;
+    --alert-danger-soft:#FEF2F2;
+}
+
+/* ── Sidebar — fondo blanco, texto oscuro ── */
+[data-testid="stSidebar"] {
+    background: var(--surface) !important;
+    border-right: 1px solid var(--border);
+}
+[data-testid="stSidebar"] * {
+    color: var(--text) !important;
+}
+/* Labels de selectbox/slider en sidebar — siempre visibles */
+[data-testid="stSidebar"] .stSelectbox label,
+[data-testid="stSidebar"] .stSlider label,
+[data-testid="stSidebar"] .stRadio label,
+[data-testid="stSidebar"] label {
+    color: var(--text) !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+}
+[data-testid="stSidebar"] .stRadio label {
+    font-weight: 400 !important;
+    padding: 6px 10px !important;
+    border-radius: 6px;
+    cursor: pointer;
+}
+[data-testid="stSidebar"] .stRadio label:hover {
+    background: var(--primary-soft);
+}
+
+/* Forzar contraste en los labels del Sidebar */
+[data-testid="stSidebar"] .stSelectbox label, 
+[data-testid="stSidebar"] .stSlider label {
+    color: #FFFFFF !important;
+}
+
+/* ── KPI Cards ── */
+.kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.kpi-value {
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+.kpi-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+}
+.kpi-hint {
+    font-size: 0.76rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* ── Alert cards ── */
+.alerta-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.alerta-card.danger { border-left-color: var(--alert-danger); }
+.alerta-card.watch  { border-left-color: var(--alert-warn); }
+.alerta-card.normal { border-left-color: var(--alert-ok); }
+
+.alerta-municipio { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+.alerta-sub       { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
+
+.nivel-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 20px;
+    font-size: 0.72rem; font-weight: 600;
+}
+.nivel-badge.danger { background: var(--alert-danger-soft); color: var(--alert-danger); }
+.nivel-badge.watch  { background: var(--alert-warn-soft); color: var(--alert-warn); }
+.nivel-badge.normal { background: var(--alert-ok-soft); color: var(--alert-ok); }
+
+.causal-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 6px;
+    font-size: 0.75rem; font-weight: 500;
+    background: var(--primary-soft); color: var(--primary);
+    border: 1px solid rgba(26,95,122,0.15);
+    margin-top: 8px;
+}
+
+.pred-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 8px; background: #F7F8FA; border-radius: 7px;
+    padding: 10px 12px; margin: 10px 0;
+}
+.pred-label {
+    font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;
+}
+.pred-value {
+    font-size: 1.3rem; font-weight: 700;
+    font-variant-numeric: tabular-nums; color: var(--text);
+}
+.pred-delta-pos { color: var(--alert-danger); }
+.pred-delta-neg { color: var(--alert-ok); }
+
+/* ── Section titles ── */
+.section-title {
+    font-size: 0.82rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--primary);
+    border-bottom: 2px solid var(--primary-soft);
+    padding-bottom: 5px; margin-bottom: 14px;
+}
+
+/* ── Page header ── */
+.page-title {
+    font-size: 1.4rem; font-weight: 700;
+    color: var(--text); margin: 0;
+}
+.page-subtitle {
+    font-size: 0.82rem; color: var(--text-muted); margin: 2px 0 0 0;
+}
+
+/* ── Tables — prevent overflow ── */
+.dataframe th {
+    background: var(--primary) !important;
+    color: white !important;
+    font-size: 0.76rem !important;
+    font-weight: 600 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+.dataframe td {
+    font-size: 0.8rem !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    max-width: 300px;
+    white-space: normal !important;
+    max-width: 300px;
+}
+
+/* ── Topbar ── */
+.topbar {
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    padding: 8px 0; display: flex; align-items: center;
+    justify-content: space-between;
+    font-size: 0.8rem; color: var(--text-muted);
+}
+.topbar-model {
+    display: flex; align-items: center; gap: 8px;
+}
+.topbar-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--alert-ok);
+}
+
+/* ── Empty state ── */
+.empty-state {
+    background: var(--alert-ok-soft);
+    border: 1px solid #BBF7D0;
+    border-radius: 12px;
+    padding: 40px 32px;
+    text-align: center;
+}
+.empty-state-icon {
+    font-size: 2.5rem; margin-bottom: 12px;
+}
+.empty-state-title {
+    font-size: 1.1rem; font-weight: 700; color: #15803D;
+    margin-bottom: 6px;
+}
+.empty-state-text {
+    font-size: 0.85rem; color: #166534; line-height: 1.5;
+}
+
+/* ── Justification cards ── */
+.justif-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--primary);
+    border-radius: 8px;
+    padding: 14px 16px;
+    height: 100%;
+}
+.justif-title {
+    font-weight: 700; color: var(--text);
+    margin-bottom: 8px; font-size: 0.88rem;
+}
+.justif-text {
+    font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;
+}
