@@ -159,11 +159,13 @@ class ETLService:
                     print(f"    PM2.5: 0 registros. Intentando sin filtro de fecha...")
                     # Fallback: últimos datos disponibles
                     params2 = {
-                        "$where": "codigo_departamento = 5 AND msfl_code = 'PM2.5'",
+                        "$where": ("codigo_departamento = 5 AND msfl_code = 'PM2.5' AND "
+                                   "med_fecha_inicio >= '2024-06-01T00:00:00.000'"),
                         "$select": "codigo_municipio, med_fecha_inicio, med_concentracion_estandar",
                         "$limit": SOCRATA_LIMIT,
                         "$order": "med_fecha_inicio DESC",
                     }
+
                     r2 = http_requests.get(url, params=params2, timeout=SOCRATA_TIMEOUT)
                     if r2.status_code == 200:
                         data = r2.json()
@@ -220,16 +222,13 @@ class ETLService:
 
     @classmethod
     def transform_pm25_semanal(cls, df_pm25: pd.DataFrame) -> pd.DataFrame:
-        """Agrega SISAIRE PM2.5 → semanal por municipio."""
+        """Agrega SISAIRE PM2.5 como promedio por municipio (dato más reciente disponible)."""
         if df_pm25.empty:
             return pd.DataFrame()
-        df = df_pm25.copy()
-        s = df["fechaobservacion"].apply(_semana_epi)
-        df["anio"] = s.apply(lambda x: x[0])
-        df["semana_epi"] = s.apply(lambda x: x[1])
-        df_agg = df.groupby(["codigo_dane", "anio", "semana_epi"])["valor"].mean().reset_index()
+        # SISAIRE tiene rezago — calculamos promedio por municipio, no por semana
+        df_agg = df_pm25.groupby("codigo_dane")["valor"].mean().reset_index()
         df_agg.rename(columns={"valor": "pm25_avg"}, inplace=True)
-        print(f"  ✓ pm25_avg (SISAIRE): {len(df_agg)} filas")
+        print(f"  ✓ pm25_avg (SISAIRE): {len(df_agg)} municipios con promedio PM2.5")
         return df_agg
 
     @classmethod
@@ -491,11 +490,11 @@ class ETLService:
         df_clima = cls.transform_clima_semanal(datos_ideam, n2d)
         df_pm = cls.transform_pm25_semanal(df_pm25)
 
-        # Merge clima + PM2.5
-        if not df_clima.empty and not df_pm.empty:
-            df_all = df_clima.merge(df_pm, on=["codigo_dane", "anio", "semana_epi"], how="outer")
-        elif not df_clima.empty:
-            df_all = df_clima
+        # Merge clima + PM2.5 (PM2.5 es promedio municipal, no semanal)
+        if not df_clima.empty:
+            df_all = df_clima.copy()
+            if not df_pm.empty:
+                df_all = df_all.merge(df_pm, on="codigo_dane", how="left")
         elif not df_pm.empty:
             df_all = df_pm
         else:
