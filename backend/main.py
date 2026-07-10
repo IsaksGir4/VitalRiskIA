@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse # <-- IMPORTANTE AGREGAR ESTO
 from fastapi.middleware.cors import CORSMiddleware
 from api.v1.api import api_router
 from settings.config import settings
@@ -36,4 +37,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- NUEVAS RUTAS GLOBALES PARA ARREGLAR LOS 404 ---
+
+@app.get("/", include_in_schema=False)
+def root():
+    """Redirige la raíz al Swagger UI."""
+    return RedirectResponse(url="/docs")
+
+@app.get("/health", tags=["Sistema"])
+def render_health_check():
+    """Endpoint simplificado en la raíz para el Health Check de Render."""
+    return {"status": "OK", "message": "Render ping exitoso"}
+
+# --------------------------------------------------
+
+# Aquí se incluyen todas tus rutas complejas (/api/v1/mapa, /api/v1/alertas, etc.)
 app.include_router(api_router, prefix="/api/v1")

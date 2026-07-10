@@ -1,11 +1,66 @@
-# Archivos a ignorar en Github (ej. entornos virtuales)
-.env
-__pycache__/
-data/raw/
+# ═══════════════════════════════════════════
+# VitalRisk AI — .gitignore
+# ═══════════════════════════════════════════
 
-*.pdf
-*.xlsx
-*.csv
-*.docx
-*.jpg
-*.png
+# Credenciales y variables de entorno
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+venv/
+VenvIA/
+.venv/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Datos pesados (usar Git LFS si es necesario)
+data/raw/**
+data/raw/**
+data/raw/**
+!data/raw/.gitkeep
+data/processed/**
+!data/processed/clean_municipios.geojson
+!data/processed/.gitkeep
+
+docs/*.docx
+
+# data/raw/**.csv
+# data/raw/**.xlsx
+# data/raw/**.json
+# data/processed/**.csv
+
+
+# Modelo entrenado (incluir — es pequeño: 234KB)
+# NO excluir: data/models/modelo_xgboost_vitalrisk.pkl
+
+# PostgreSQL
+pgdata/
+
+# Docker
+docker-compose.override.yml
+
+# Logs
+*.log
+
+# Streamlit cache
+frontend/.streamlit/secrets.toml
