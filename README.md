@@ -206,7 +206,7 @@ VitalRiskIA/
 
 ## Metodología
 
-Se siguió **CRISP-ML(Q)** (Cross-Industry Standard Process for Machine Learning with Quality Assurance), documentado en el ADR-002:
+Se siguió **ASUM-ML**, corregido en el ADR-003:
 
 1. **Business Understanding** → Problemática de IRA en Antioquia
 2. **Data Understanding** → EDA con 8 notebooks
@@ -220,10 +220,10 @@ Se siguió **CRISP-ML(Q)** (Cross-Industry Standard Process for Machine Learning
 | Rol | Integrante |
 |-----|-----------|
 | Product Owner / Lead Developer | Isaac Camilo Giraldo Gómez |
-| Scrum Master / Data Engineer | [Compañera de equipo] |
+| Scrum Master / Data Engineer | Luisa Fernanda Giraldo Zuluaga |
 
-**Universidad:** EIA — Ingeniería Biomédica
-**Programas adicionales:** Ingeniería Administrativa · Ingeniería de Sistemas
+**Universidad:** EIA — Ingeniería Administrativa · Ingeniería de Sistemas
+**Universidad:** Simon Bolivar Ingeniería Biomedica
 
 ## Licencia
 
