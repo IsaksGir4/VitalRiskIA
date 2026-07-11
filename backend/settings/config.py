@@ -9,11 +9,11 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
 
     # Variables individuales (para correr local con uvicorn)
-    DB_USER: str = "vitalrisk_user"
-    DB_PASSWORD: str = "vitalrisk2026"
-    DB_NAME: str = "vitalrisk_db"
-    DB_PORT: int = 5433
-    DB_HOST: str = "127.0.0.1"
+    DB_USER: str = "postgres"
+    DB_PASSWORD: str = ""
+    DB_NAME: str = "postgres"
+    DB_PORT: int = 5432
+    DB_HOST: str = "localhost"
 
     # URL completa (la inyecta Docker — tiene prioridad si existe)
     DATABASE_URL: Optional[str] = None
