@@ -14,7 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # 4. Cambiar el directorio de trabajo específicamente a backend para correr uvicorn
-WORKDIR /app/backend
+WORKDIR /app
 
 # Exponer el puerto
 EXPOSE 8000
