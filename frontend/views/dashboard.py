@@ -15,7 +15,7 @@ from pathlib import Path
 from config import API
 
 GEOJSON_PATH = (
-    Path(__file__).parent.parent.parent
+    Path(__file__).parent.parent
     / "data" / "processed" / "clean_municipios.geojson"
 )
 

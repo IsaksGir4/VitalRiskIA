@@ -14,6 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar código del frontend
 COPY frontend/ .
 
+COPY data/processed/clean_municipios.geojson /app/data/processed/clean_municipios.geojson
+
 # Puerto que expone Render
 EXPOSE 8501
 
