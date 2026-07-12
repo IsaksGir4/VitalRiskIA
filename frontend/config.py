@@ -1,8 +1,3 @@
 import os
-import requests
 
-# Lee la URL de la API desde las variables de entorno, o usa localhost si falla (para desarrollo)
-API = os.getenv("VITALRISK_API_URL", "http://localhost:8000")
-
-# Cuando llames a un endpoint:
-respuesta = requests.get(f"{API}/api/v1/mapa/riesgo")
+API = os.getenv("API_URL", "http://127.0.0.1:8000/api/v1")
