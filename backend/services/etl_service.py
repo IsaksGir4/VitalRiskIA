@@ -439,8 +439,9 @@ class ETLService:
             datos_ideam[var] = cls.fetch_ideam(did, f_desde, f_hasta)
             print(f"    {len(datos_ideam[var])} registros")
 
-        print(f"  → pm25_avg SISAIRE ({SISAIRE_ID})...")
-        df_pm25 = cls.fetch_sisaire_pm25(f_desde, f_hasta)
+        print("  → pm25_avg (histórico BD)...")
+        # Usamos el método que sí existe en la clase, pasándole la sesión db
+        df_pm25 = cls.fetch_pm25_historico(db)
         print(f"    {len(df_pm25)} registros PM2.5")
 
         total = sum(len(d) for d in datos_ideam.values()) + len(df_pm25)
@@ -479,9 +480,11 @@ class ETLService:
 
         print(f"  Municipios: {len(df_t)}")
 
-        print("  Enriqueciendo features + IPT...")
-        df_final = cls.enrich_features(df_t.copy(), db)
-        print(f"  {len(df_final)} municipios listos\n")
+        print("   Enriqueciendo features + IPT...")
+        # El constructor pd.DataFrame() garantiza el tipo correcto para PyLance
+        df_t_seguro = pd.DataFrame(df_t) 
+        df_final = cls.enrich_features(df_t_seguro.copy(), db)
+        print(f"   {len(df_final)} municipios listos\n")
 
         # FASE 3
         print("── FASE 3: PREDICT + STORE ──")
@@ -500,7 +503,7 @@ class ETLService:
                 "ideam_temperatura": len(datos_ideam.get("temperatura_avg", [])),
                 "ideam_precipitacion": len(datos_ideam.get("precipitacion_sum", [])),
                 "ideam_presion": len(datos_ideam.get("presion_avg", [])),
-                "sisaire_pm25": len(df_pm25),
+                "historico_pm25": len(df_pm25),
             },
             "timestamp": ahora.isoformat(),
         }
