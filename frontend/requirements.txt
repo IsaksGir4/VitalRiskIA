@@ -1,7 +1,12 @@
+# ============================================================
+# VitalRisk AI — Frontend dependencies
+# Equipo 326 | Datos al Ecosistema 2026
+# ============================================================
+
 streamlit==1.58.0
 streamlit-folium==0.27.2
 folium==0.20.0
 altair==6.2.2
 pandas==3.0.3
-requests==2.34.2
 numpy==2.4.4
+requests==2.34.2

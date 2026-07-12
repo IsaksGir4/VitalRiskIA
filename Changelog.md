@@ -3,6 +3,30 @@
 Todos los cambios relevantes del proyecto están documentados aquí.
 Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 
+
+## [1.1.0] — 2026-07-12
+
+### Agregado
+- Deploy en Supabase (PostgreSQL gestionado) como capa de datos en producción
+- Deploy en Render Web Service: backend FastAPI en https://vitalriskia.onrender.com
+- Deploy en Render Web Service: frontend Streamlit en https://vitalriskia-frontend.onrender.com
+- Dockerfile para el frontend Streamlit con copia del GeoJSON base
+- `COPY data/processed/clean_municipios.geojson` en Dockerfile frontend (fix path en producción)
+- `GEOJSON_PATH` calculado con `Path(__file__).parent.parent / "data/processed/"` en dashboard.py
+
+### Cambiado
+- `etl_service.py`: método `fetch_sisaire_pm25` renombrado a `fetch_pm25_historico(db)` — ahora usa promedio histórico de PM2.5 desde `fact_calidad_aire` en vez de intentar descargar de SISAIRE (timeout en producción)
+- `etl_service.py` línea 443: llamada corregida de `cls.fetch_sisaire_pm25(f_desde, f_hasta)` a `cls.fetch_pm25_historico(db)` (fix AttributeError en producción)
+- Variables de entorno en Render: `DB_HOST`, `DB_PORT` (5432), `DB_USER`, `DB_PASSWORD`, `DB_NAME` apuntan a Session Pooler de Supabase
+- `frontend/config.py`: `API_URL` leída desde env var, default `http://127.0.0.1:8000/api/v1`
+- `map capa en dashboard.py`: GeoJSON unificado (1 capa) en vez de 125 capas individuales — mejora de rendimiento
+
+### Corregido
+- Mapa mostraba todo en blanco en producción por ruta incorrecta al GeoJSON base — resuelto con Dockerfile + path relativo
+- Umbrales de alerta unificados: VERDE <30%, NARANJA 30-60%, ROJA ≥60% (basados en análisis de percentiles NB05)
+- Colores del mapa coroplético: verde/naranja/rojo visibles correctamente en producción
+
+
 ## [1.0.0] — 2026-07-06
 
 ### Agregado

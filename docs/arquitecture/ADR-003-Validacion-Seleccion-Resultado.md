@@ -208,7 +208,7 @@ PostgreSQL nativo de Windows (PID 7984) ocupaba el puerto 5432, impidiendo conex
 
 ```
 VitalRiskIA/
-├── .env                    # DB_PORT=5433, DB_PASSWORD=vitalrisk2026
+├── .env                    # DB_PORT=5433 (ver .env.example)
 ├── docker-compose.yml      # puerto 5433:5432
 ├── backend/
 │   ├── Dockerfile
@@ -273,17 +273,17 @@ subgraph PLATA["Zona Plata — VenvIA / Jupyter Notebooks"]
 end
 
 subgraph ETL["ETL — etl/load_to_db.py"]
-    C1["Upsert idempotente\nvía SQLAlchemy → PostGIS :5433"]
+    C1["Upsert idempotente\nvía SQLAlchemy → Supabase"]
 end
 
-subgraph STORE["Feature Store — PostGIS Docker :5433"]
+subgraph STORE["Feature Store — Supabase (PostgreSQL gestionado)"]
     D1["dim_municipios (125)"]
     D2["dim_poblacion_anual (750)"]
     D3["dim_estaciones_aire (vacía — espera SIATA)"]
     D4["fact_calidad_aire (12,354)"]
     D5["fact_eventos_ira (910)"]
-    D6["fact_riesgo_territorial (910)\nipt_score y nivel_riesgo = NULL hasta HU11"]
-    D7["alertas_territoriales (vacía — HU15)"]
+    D6["fact_riesgo_territorial (948+)\nipt_score y nivel_riesgo calculados ✓"]
+    D7["alertas_territoriales (845+ filas ✓)"]
 end
 
 subgraph ORO["Zona Oro — Épica 4 (pendiente)"]
@@ -349,6 +349,26 @@ Al 1 de julio de 2026, el equipo acumula 8 días de carry-over. Quedan 12 días 
 - SHAP: versión simplificada (feature importance nativa) para MVP. SHAP completo = mejora futura.
 - Streamlit: mapa coroplético estático de alertas. Actualización automática semanal = trabajo futuro.
 - Refactoring notebooks → scripts ETL: pospuesto a post-concurso.
+
+---
+
+## 7b. Actualización de Estado — 12 julio 2026
+
+Las siguientes tablas pasaron de "vacías/pendientes" a operativas tras completar las Épicas 4-6:
+
+| Tabla | Estado al 1 jul | Estado actual |
+|---|---|---|
+| `fact_riesgo_territorial` | 910 filas · ipt_score=NULL | 948+ filas · ipt_score calculado |
+| `alertas_territoriales` | Vacía — HU15 pendiente | 845+ filas históricas + 38 filas 2026-W27 |
+| `dim_estaciones_aire` | Reservada | Reservada (SIATA pendiente) |
+
+**Migración a producción cloud (Épica 6):**
+
+| Componente | Local | Producción |
+|---|---|---|
+| Base de datos | Docker PostgreSQL+PostGIS :5433 | Supabase Session Pooler :6543 |
+| Backend | uvicorn local :8000 | Render — vitalriskia.onrender.com |
+| Frontend | streamlit local :8501 | Render — vitalriskia-frontend.onrender.com |
 
 ---
 

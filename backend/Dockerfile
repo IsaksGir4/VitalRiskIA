@@ -1,26 +1,30 @@
-# Instrucciones para construir el contenedor de la API
+# ============================================================
+# VitalRisk AI — Dockerfile Backend (FastAPI + XGBoost)
+# Equipo 326 | Datos al Ecosistema 2026
+# Deploy: Render Web Service
+# ============================================================
 FROM python:3.10-slim
 
-# Establecer el directorio de trabajo principal
 WORKDIR /app
 
+# Dependencias de sistema para psycopg2 y compilación
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq-dev gcc \
+    libpq-dev \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# 1. Copiar los requirements desde la carpeta backend
+# Instalar dependencias Python primero (capa cacheada)
 COPY backend/requirements.txt .
-
-# 2. Instalar dependencias
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 3. Copiar el código de la API
+# Copiar código del backend
 COPY backend/ .
+
+# Copiar artefactos de modelo y datos necesarios en runtime
 COPY data/models/ /app/data/models/
 COPY data/processed/clean_municipios.geojson /app/data/processed/clean_municipios.geojson
 
-# 4. Exponer el puerto
 EXPOSE 8000
 
-# Comando para ejecutar la aplicación (sin --reload para producción)
+# Sin --reload en producción
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

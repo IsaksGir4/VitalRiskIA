@@ -1,0 +1,104 @@
+# ============================================================
+# VitalRisk AI — GitHub Actions CI Pipeline
+# Equipo 326 | Datos al Ecosistema 2026
+# ============================================================
+# Se ejecuta automáticamente en cada push/PR a main.
+#
+# Separación de tests por tipo:
+#
+#   job 1 — unit_tests: corre sin red ni BD
+#     · test_data_quality.py    (valida CSVs procesados en el repo)
+#     · test_model_inference.py (carga el .pkl y verifica outputs)
+#     · verificación anti-credenciales
+#
+#   job 2 — integration_tests: llama a la URL pública de Render
+#     · test_integration_api.py  (endpoints reales en producción)
+#     Solo corre en push a main (no en PR, para no saturar Render
+#     en cada PR y para que el cold start no falle el CI)
+# ============================================================
+
+name: CI — VitalRisk AI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# ─────────────────────────────────────────────────────────────
+# JOB 1: Tests unitarios (sin red, sin BD)
+# ─────────────────────────────────────────────────────────────
+jobs:
+  unit_tests:
+    name: Tests unitarios y validación
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependencias backend
+        run: pip install -r backend/requirements.txt
+
+      - name: Tests de calidad de datos
+        run: pytest tests/test_data_quality.py -v
+
+      - name: Tests de inferencia del modelo
+        run: pytest tests/test_model_inference.py -v
+
+      - name: Verificar que no hay credenciales hardcodeadas
+        run: |
+          echo "Buscando contraseñas en el repositorio..."
+          if grep -r --include="*.py" --include="*.yml" --include="*.yaml" \
+             --include="*.json" \
+             -E "(password|passwd|secret|token)\s*=\s*['\"][^'\"]{4,}" \
+             --exclude-dir=".git" --exclude-dir="venv" --exclude-dir="__pycache__" \
+             . 2>/dev/null | grep -v ".example" | grep -v "os.getenv" | grep -v "#"; then
+            echo "ERROR: posibles credenciales encontradas en el codigo"
+            exit 1
+          fi
+          echo "OK: sin credenciales hardcodeadas"
+
+# ─────────────────────────────────────────────────────────────
+# JOB 2: Tests de integración contra la URL pública de Render
+# Solo en push a main (no en PR) para evitar cold start en CI
+# ─────────────────────────────────────────────────────────────
+  integration_tests:
+    name: Tests de integración (Render)
+    runs-on: ubuntu-latest
+    needs: unit_tests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar requests y pytest
+        run: pip install requests pytest
+
+      - name: Despertar el servicio de Render (warm-up)
+        run: |
+          echo "Haciendo warm-up del backend en Render..."
+          curl --retry 5 --retry-delay 15 --max-time 120 \
+            https://vitalriskia.onrender.com/api/v1/health/ || true
+          echo "Warm-up completado"
+
+      - name: Tests de integración de la API
+        run: pytest tests/test_integration_api.py -v --timeout=120
+        env:
+          # Si en el futuro se añade autenticación a la API,
+          # agregar el token aquí desde GitHub Secrets:
+          # API_TOKEN: ${{ secrets.API_TOKEN }}
+          PYTHONDONTWRITEBYTECODE: 1

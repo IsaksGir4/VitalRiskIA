@@ -1,15 +1,35 @@
-fastapi
-uvicorn
-sqlalchemy
-geoalchemy2
-psycopg2-binary
-pydantic
-pydantic-settings
-pandas
-numpy
-geopandas
-python-dotenv
-pyogrio
-xgboost
-shapely
-requests
+# ============================================================
+# VitalRisk AI — Backend dependencies
+# Equipo 326 | Datos al Ecosistema 2026
+# ============================================================
+
+# API
+fastapi==0.139.0
+uvicorn==0.49.0
+starlette==1.3.1
+pydantic==2.13.4
+pydantic-settings==2.14.2
+python-multipart==0.0.32
+
+# Base de datos
+sqlalchemy==2.0.51
+geoalchemy2==0.20.0
+psycopg2-binary==2.9.12
+
+# Datos y ML
+pandas==3.0.3
+numpy==2.4.4
+geopandas==1.1.4
+shapely==2.1.2
+pyogrio==0.13.0
+xgboost==3.3.0
+scikit-learn>=1.5       # requerido por NB07 (selección de features)
+shap>=0.47              # requerido por NB08 (explicabilidad SHAP)
+
+# ETL / utilidades
+requests==2.34.2
+python-dotenv==1.2.2
+
+# Testing
+pytest>=7.4
+httpx>=0.25
