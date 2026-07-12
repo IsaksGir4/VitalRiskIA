@@ -36,7 +36,7 @@ def _geojson_base():
         return json.load(f)
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def _datos_mapa(anio, semana):
     try:
         r = requests.get(
