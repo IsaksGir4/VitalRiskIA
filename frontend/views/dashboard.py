@@ -16,7 +16,7 @@ from config import API
 
 GEOJSON_PATH = (
     Path(__file__).parent.parent
-    / "data" / "processed" / "clean_municipios.geojson"
+    / "data" / "processed" / "clean_municipios_simple.geojson"
 )
 
 VALLE_ABURRA = {

@@ -152,7 +152,7 @@ class ETLService:
             "$order": "med_fecha_inicio DESC",
         }
         try:
-            r = http_requests.get(url, params=params, timeout=SOCRATA_TIMEOUT)
+            r = http_requests.get(url, params=params, timeout=60)
             if r.status_code == 200:
                 data = r.json()
                 if not data:
@@ -166,7 +166,7 @@ class ETLService:
                         "$order": "med_fecha_inicio DESC",
                     }
 
-                    r2 = http_requests.get(url, params=params2, timeout=SOCRATA_TIMEOUT)
+                    r2 = http_requests.get(url, params=params2, timeout=60)
                     if r2.status_code == 200:
                         data = r2.json()
                     else:
