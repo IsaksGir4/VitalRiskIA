@@ -16,13 +16,9 @@ if css_path.exists():
     with open(css_path, encoding="utf-8") as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
-# Estado global
-if "anio" not in st.session_state:
-    st.session_state.anio = 2026
-if "semana" not in st.session_state:
-    st.session_state.semana = 27
 
 # --- Lógica de Monitoreo Constante (Estado Global) ---
+# Estado global — inicializar con la última fecha disponible
 @st.cache_data(ttl=3600)
 def fetch_latest_date():
     try:
@@ -32,6 +28,11 @@ def fetch_latest_date():
         return {"anio": 2026, "semana_epi": 27}
 
 latest = fetch_latest_date()
+
+if "anio" not in st.session_state:
+    st.session_state.anio = latest.get("anio", 2026)
+if "semana" not in st.session_state:
+    st.session_state.semana = latest.get("semana_epi", 27)
 
 if "anio" not in st.session_state:
     st.session_state.anio = latest["anio"]
