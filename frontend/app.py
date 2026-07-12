@@ -3,6 +3,8 @@ from pathlib import Path
 from config import API
 import requests
 
+st.cache_data.clear()
+
 st.set_page_config(
     page_title="VitalRisk AI — Vigilancia Preventiva Antioquia",
     page_icon="🫁",
@@ -19,7 +21,7 @@ if css_path.exists():
 
 # --- Lógica de Monitoreo Constante (Estado Global) ---
 # Estado global — inicializar con la última fecha disponible
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=60)
 def fetch_latest_date():
     try:
         r = requests.get(f"{API}/mapa/ultima_fecha", timeout=5)
