@@ -3,8 +3,6 @@ from pathlib import Path
 from config import API
 import requests
 
-st.cache_data.clear()
-
 st.set_page_config(
     page_title="VitalRisk AI — Vigilancia Preventiva Antioquia",
     page_icon="🫁",

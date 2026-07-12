@@ -42,7 +42,7 @@ def _datos_mapa(anio, semana):
         r = requests.get(
             f"{API}/mapa/riesgo",
             params={"anio": anio, "semana_epi": semana},
-            timeout=10,
+            timeout=30,
         )
         return r.json() if r.status_code == 200 else None
     except Exception:
