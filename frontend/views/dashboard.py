@@ -79,7 +79,7 @@ def _color_ipt(ipt):
     return "#EF4444"      # red-500
 
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=60)
 def _build_enriched_geojson(anio, semana):
     """Merge API data into base GeoJSON and pre-compute colors.
     
