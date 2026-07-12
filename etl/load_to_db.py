@@ -13,19 +13,16 @@ import os
 
 load_dotenv(Path(__file__).parent.parent / ".env")
 
-# Agrega esto temporalmente justo después de load_dotenv() para debuggear
-print(f"USER: {os.getenv('DB_USER')}")
-print(f"PASS: {os.getenv('DB_PASSWORD')}")
-print(f"NAME: {os.getenv('DB_NAME')}")
+print(f"DATABASE_URL: {os.getenv('DATABASE_URL')}")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-DB_URL = (
-    f"postgresql://{os.getenv('DB_USER')}:"
-    f"{os.getenv('DB_PASSWORD')}@127.0.0.1:"
-    f"{os.getenv('DB_PORT', '5433')}/"
-    f"{os.getenv('DB_NAME')}"
-)
-
-engine = create_engine(DB_URL)
+if DATABASE_URL:
+    engine = create_engine(DATABASE_URL)
+else:
+    engine = create_engine(
+        f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
+        f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+    )
 
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -105,8 +102,9 @@ df_pob = pd.read_csv(PROCESSED / "clean_poblacion_anual.csv",
                      dtype={'codigo_dane': str})
 df_pob['codigo_dane'] = df_pob['codigo_dane'].str.zfill(5)
 df_pob['poblacion_total'] = df_pob['poblacion_total'].astype(int)
-cargar_tabla(df_pob, 'dim_poblacion_anual', 
-             ['codigo_dane', 'anio'], engine)
+df_pob.to_sql('dim_poblacion_anual', engine, if_exists='replace', index=False, method='multi', chunksize=500)
+print(f"  ✓ dim_poblacion_anual: {len(df_pob):,} filas cargadas")
+
 
 # ── 3. fact_calidad_aire ───────────────────────────────────
 print("\n[3/7] Cargando fact_calidad_aire...")
@@ -120,8 +118,8 @@ COLS_CLIMA_BD = [
     'humedad_avg', 'precipitacion_sum', 'presion_avg', 'fuente_pm'
 ]
 df_clima_bd = df_clima[COLS_CLIMA_BD].copy()
-cargar_tabla(df_clima_bd, 'fact_calidad_aire',
-             ['codigo_dane', 'anio', 'semana_epi'], engine)
+df_clima_bd.to_sql('fact_calidad_aire', engine, if_exists='replace', index=False, method='multi', chunksize=500)
+print(f"  ✓ fact_calidad_aire: {len(df_clima_bd):,} filas cargadas")
 
 # ── 4. fact_eventos_ira ────────────────────────────────────
 print("\n[4/7] Cargando fact_eventos_ira...")
@@ -140,8 +138,9 @@ COLS_IRA_BD = [
     'periodo_pandemia'
 ]
 cols_ok = [c for c in COLS_IRA_BD if c in df_ira.columns]
-cargar_tabla(df_ira[cols_ok], 'fact_eventos_ira',
-             ['codigo_dane', 'anio', 'semana_epi'], engine)
+
+df_ira[cols_ok].to_sql('fact_eventos_ira', engine, if_exists='replace', index=False, method='multi', chunksize=500)
+print(f"  ✓ fact_eventos_ira: {len(df_ira[cols_ok]):,} filas cargadas")
 
 # ── 5. fact_riesgo_territorial ─────────────────────────────
 print("\n[5/7] Cargando fact_riesgo_territorial...")
@@ -175,8 +174,9 @@ COLS_FEAT_BD = [
     'periodo_pandemia', 'ipt_score', 'nivel_riesgo'
 ]
 cols_ok = [c for c in COLS_FEAT_BD if c in df_feat.columns]
-cargar_tabla(df_feat[cols_ok], 'fact_riesgo_territorial',
-             ['codigo_dane', 'anio', 'semana_epi'], engine)
+
+df_feat[cols_ok].to_sql('fact_riesgo_territorial', engine, if_exists='replace', index=False, method='multi', chunksize=500)
+print(f"  ✓ fact_riesgo_territorial: {len(df_feat[cols_ok]):,} filas cargadas")
 
 # Agregar al final de load_to_db.py — actualizar ipt_score y nivel_riesgo
 print("\n[6/7] Actualizando ipt_score y nivel_riesgo en fact_riesgo_territorial...")

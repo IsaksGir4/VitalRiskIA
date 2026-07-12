@@ -8,11 +8,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar dependencias Python
-COPY requirements.txt .
+COPY frontend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar código del frontend
-COPY . .
+COPY frontend/ .
 
 # Puerto que expone Render
 EXPOSE 8501
