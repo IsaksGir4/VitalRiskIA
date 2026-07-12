@@ -136,56 +136,20 @@ class ETLService:
             return pd.DataFrame()
 
     @staticmethod
-    def fetch_sisaire_pm25(fecha_desde: str, fecha_hasta: str) -> pd.DataFrame:
-        """
-        Extrae PM2.5 de SISAIRE (g4t8-zkc3).
-        Campos clave: codigo_municipio (DANE directo), msfl_code, med_concentracion_estandar
-        """
-        url = f"{SOCRATA_BASE}/{SISAIRE_ID}.json"
-        params = {
-            "$where": (f"codigo_departamento = 5 AND "
-                       f"msfl_code = 'PM2.5' AND "
-                       f"med_fecha_inicio >= '{fecha_desde}T00:00:00.000' AND "
-                       f"med_fecha_inicio <= '{fecha_hasta}T23:59:59.000'"),
-            "$select": "codigo_municipio, med_fecha_inicio, med_concentracion_estandar",
-            "$limit": SOCRATA_LIMIT,
-            "$order": "med_fecha_inicio DESC",
-        }
-        try:
-            r = http_requests.get(url, params=params, timeout=60)
-            if r.status_code == 200:
-                data = r.json()
-                if not data:
-                    print(f"    PM2.5: 0 registros. Intentando sin filtro de fecha...")
-                    # Fallback: últimos datos disponibles
-                    params2 = {
-                        "$where": ("codigo_departamento = 5 AND msfl_code = 'PM2.5' AND "
-                                   "med_fecha_inicio >= '2024-06-01T00:00:00.000'"),
-                        "$select": "codigo_municipio, med_fecha_inicio, med_concentracion_estandar",
-                        "$limit": SOCRATA_LIMIT,
-                        "$order": "med_fecha_inicio DESC",
-                    }
-
-                    r2 = http_requests.get(url, params=params2, timeout=60)
-                    if r2.status_code == 200:
-                        data = r2.json()
-                    else:
-                        return pd.DataFrame()
-
-                if not data:
-                    return pd.DataFrame()
-
-                df = pd.DataFrame(data)
-                df["valor"] = pd.to_numeric(df["med_concentracion_estandar"], errors="coerce")
-                df["fechaobservacion"] = pd.to_datetime(df["med_fecha_inicio"], errors="coerce")
-                df["codigo_dane"] = df["codigo_municipio"].astype(str).str.zfill(5)
-                return df.dropna(subset=["valor", "fechaobservacion"])
-            else:
-                print(f"    ⚠ SISAIRE HTTP {r.status_code}: {r.text[:200]}")
-                return pd.DataFrame()
-        except Exception as e:
-            print(f"    ✗ Error SISAIRE: {e}")
+    def fetch_pm25_historico(db: Session) -> pd.DataFrame:
+        """Usa promedio histórico de PM2.5 por municipio desde fact_calidad_aire."""
+        rows = db.execute(text("""
+            SELECT codigo_dane, AVG(pm25_avg) as pm25_avg
+            FROM fact_calidad_aire
+            WHERE pm25_avg IS NOT NULL
+            GROUP BY codigo_dane
+        """)).fetchall()
+        if not rows:
             return pd.DataFrame()
+        df = pd.DataFrame(rows, columns=["codigo_dane", "valor"])
+        df["codigo_dane"] = df["codigo_dane"].astype(str).str.zfill(5)
+        print(f"  ✓ pm25_avg (histórico BD): {len(df)} municipios")
+        return df
 
     # ══════════════════════════════════════════════════════
     # FASE 2: TRANSFORM

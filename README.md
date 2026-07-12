@@ -219,11 +219,11 @@ Se siguió **ASUM-ML**, corregido en el ADR-003:
 
 | Rol | Integrante |
 |-----|-----------|
-| Product Owner / Lead Developer | Isaac Camilo Giraldo Gómez |
-| Scrum Master / Data Engineer | Luisa Fernanda Giraldo Zuluaga |
+| Scrum Master / Lead Developer | Isaac Camilo Giraldo Gómez |
+| Product Owner / Data Engineer | Luisa Fernanda Giraldo Zuluaga |
 
 **Universidad:** EIA — Ingeniería Administrativa · Ingeniería de Sistemas
-**Universidad:** Simon Bolivar Ingeniería Biomedica
+**Universidad:** Simon Bolivar — Ingeniería Biomedica
 
 ## Licencia
 
