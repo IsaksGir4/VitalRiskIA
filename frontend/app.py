@@ -34,10 +34,6 @@ if "anio" not in st.session_state:
 if "semana" not in st.session_state:
     st.session_state.semana = latest.get("semana_epi", 27)
 
-if "anio" not in st.session_state:
-    st.session_state.anio = latest["anio"]
-if "semana" not in st.session_state:
-    st.session_state.semana = latest["semana_epi"]
 
 # ── Sidebar ────────────────────────────────────────────────
 with st.sidebar:
