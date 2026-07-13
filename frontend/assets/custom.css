@@ -5,7 +5,7 @@
 
 /* ── Reset Streamlit ── */
 .block-container {
-    padding-top: 1rem !important;
+    padding-top: 2.5rem !important;
     padding-left: 1.5rem !important;
     padding-right: 1.5rem !important;
     max-width: 100% !important;
