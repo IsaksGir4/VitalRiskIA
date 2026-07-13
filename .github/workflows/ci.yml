@@ -86,7 +86,7 @@ jobs:
           cache: pip
 
       - name: Instalar requests y pytest
-        run: pip install requests pytest
+        run: pip install requests pytest pytest-timeout
 
       - name: Despertar el servicio de Render (warm-up)
         run: |
