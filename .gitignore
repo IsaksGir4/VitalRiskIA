@@ -38,7 +38,7 @@ data/raw/**
 data/raw/**
 data/raw/**
 !data/raw/.gitkeep
-data/processed/**
+# data/processed/**
 !data/processed/clean_municipios.geojson
 !data/processed/clean_municipios_simple.geojson
 !data/processed/.gitkeep
@@ -48,7 +48,7 @@ docs/*.docx
 # data/raw/**.csv
 # data/raw/**.xlsx
 # data/raw/**.json
-# data/processed/**.csv
+!data/processed/**.csv
 
 
 # Modelo entrenado (incluir — es pequeño: 234KB)
