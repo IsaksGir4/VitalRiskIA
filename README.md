@@ -66,7 +66,7 @@ graph TD
     subgraph Fuentes ["Datos Abiertos Colombia"]
         A1["IDEAM DHIME\nHumedad · Temperatura\nPrecipitación · Presión\n4 APIs Socrata"]
         A2["IDEAM SISAIRE\nPM2.5 · PM10\ng4t8-zkc3"]
-        A3["SIVIGILA/INS\nCasos IRA 2018-2023\n+ DANE MGN/ECV/CNPV"]
+        A3["SIVIGILA/INS\nCasos IRA 2018-2023\n+ DANE MGN/CNPV + ECV ANTIOQUIA"]
     end
 
     subgraph ETL ["ETL Near-Real-Time\n(services/etl_service.py)"]
