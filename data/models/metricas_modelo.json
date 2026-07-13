@@ -57,6 +57,6 @@
     "rmse_medio": 1.914722841978073,
     "rmse_std": 1.4778360019280226,
     "mejora_vs_naive_pct": 7.78204837811012,
-    "interpretacion": "Alta varianza entre folds es esperada en datos epidemiológicos con cambios de régimen (pandemia). RMSE test 2022-2023 es la métrica más representativa para producción post-pandemia."
+    "interpretacion": "Alta varianza entre folds es esperada en datos epidemiolÃ³gicos con cambios de rÃ©gimen (pandemia). RMSE test 2022-2023 es la mÃ©trica mÃ¡s representativa para producciÃ³n post-pandemia."
   }
 }
