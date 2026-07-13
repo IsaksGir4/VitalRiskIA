@@ -39,7 +39,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/).
 - Mapa coroplético Folium con capa GeoJSON única (optimización de rendimiento)
 - Empty state "Territorio seguro" cuando no hay alertas activas
 - Predicción en vivo con 1 clic (solo municipio + semana + año)
-- Portal de datos abiertos estilo SaluData con descargas CSV
+- Portal de datos abiertos con descargas CSV
 - Transparencia IA con métricas XGBoost, feature importance y justificaciones técnicas
 - 11 endpoints REST documentados en Swagger/OpenAPI
 - README.md, LICENSE MIT, .gitignore

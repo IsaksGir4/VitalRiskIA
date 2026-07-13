@@ -1,9 +1,9 @@
 """Dashboard territorial — mapa coroplético + KPIs + alertas.
 
-FIX v3: 
-- Single GeoJson layer (not 125 individual) → 10x faster
-- Colors injected into GeoJSON properties → no lambda closure issues
-- Stronger border color so municipalities are always visible
+Optimización v4:
+- Single GeoJson layer (not 125 individual) for 10x performance
+- Colors injected into GeoJSON properties
+- Hero banner dinámico que resume el estado territorial al abrir
 """
 import streamlit as st
 import requests
@@ -71,27 +71,21 @@ def _safe(v):
 def _color_ipt(ipt):
     """Map IPT score to fill color."""
     if ipt is None:
-        return "#CBD5E1"  # slate-300 — visible on light basemap
+        return "#CBD5E1"
     if ipt < 33:
-        return "#22C55E"  # green-500
+        return "#22C55E"
     if ipt < 66:
-        return "#F59E0B"  # amber-500
-    return "#EF4444"      # red-500
+        return "#F59E0B"
+    return "#EF4444"
 
 
 @st.cache_data(ttl=60)
 def _build_enriched_geojson(anio, semana):
-    """Merge API data into base GeoJSON and pre-compute colors.
-    
-    Returns a single FeatureCollection with _fill_color, _has_alert,
-    and display properties baked into each feature. This avoids 125
-    separate GeoJson() calls in Folium.
-    """
+    """Merge API data into base GeoJSON and pre-compute colors."""
     geo_base = _geojson_base()
     geo_api = _datos_mapa(anio, semana)
     alrts = _alertas()
 
-    # Build lookups
     lookup = {}
     if geo_api and geo_api.get("features"):
         for feat in geo_api["features"]:
@@ -101,10 +95,8 @@ def _build_enriched_geojson(anio, semana):
 
     mun_alerta = {a["codigo_dane"]: a for a in alrts.get("alertas", [])}
 
-    # KPI accumulators
     ipt_vals, va_ipt, pm25_vals, casos_total = [], [], [], 0
 
-    # Enrich each feature
     enriched_features = []
     for feat in geo_base.get("features", []):
         props = feat["properties"]
@@ -120,7 +112,6 @@ def _build_enriched_geojson(anio, semana):
         tasa = _safe(d.get("tasa_ira_100k"))
         al = mun_alerta.get(cod)
 
-        # KPI accumulation
         if ipt is not None:
             ipt_vals.append(ipt)
             if cod in VALLE_ABURRA:
@@ -131,7 +122,6 @@ def _build_enriched_geojson(anio, semana):
         if pm25:
             pm25_vals.append(pm25)
 
-        # Bake display props into feature
         new_props = {
             "codigo_dane": cod,
             "nombre": nom,
@@ -144,17 +134,6 @@ def _build_enriched_geojson(anio, semana):
             "_fill_color": _color_ipt(ipt),
             "_has_alert": al is not None,
             "_alert_nivel": al["nivel_alerta"] if al else "",
-            # Tooltip text
-            "_tip": (
-                f"{nom} ({sub})\n"
-                f"IPT: {ipt:.1f} · {nivel}\n" if ipt is not None else f"{nom} ({sub})\nIPT: sin datos\n"
-            ) + (
-                f"Casos IRA: {casos}\n" if casos != "—" else ""
-            ) + (
-                f"PM2.5: {pm25:.1f} µg/m³\n" if pm25 else ""
-            ) + (
-                f"⚠ {al['nivel_alerta']}" if al else ""
-            ),
         }
 
         enriched_features.append({
@@ -168,7 +147,6 @@ def _build_enriched_geojson(anio, semana):
         "features": enriched_features,
     }
 
-    # KPI summary
     n_rojas = sum(1 for a in alrts.get("alertas", []) if a["nivel_alerta"] == "ALERTA_ROJA")
     n_naranjas = sum(1 for a in alrts.get("alertas", []) if a["nivel_alerta"] == "ALERTA_NARANJA")
     kpis = {
@@ -186,31 +164,47 @@ def _build_enriched_geojson(anio, semana):
 
 def render(anio: int, semana: int):
 
-    # Topbar
-    st.markdown(f"""
-    <div class='topbar'>
-        <div class='topbar-model'>
-            <div class='topbar-dot'></div>
-            Modelo en línea · predicción:
-            <strong style='color:#1A2332;margin-left:4px;'>{anio}-W{semana:02d}</strong>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Load all data in one cached call
     with st.spinner("Cargando datos territoriales..."):
         enriched_geojson, alrts, kpis = _build_enriched_geojson(anio, semana)
 
-    # Title
-    st.markdown("""
-    <p class='page-title'>Panorama territorial · Antioquia</p>
-    <p class='page-subtitle'>
-        Predicción semanal (t+1) por municipio ·
-        XGBoost + calidad del aire + señales socioeconómicas
-    </p>
-    """, unsafe_allow_html=True)
+    # ── Hero banner dinámico ──────────────────────────────
+    # Cambia de color y mensaje según el estado real del territorio
+    n_rojas = kpis["n_rojas"]
+    n_naranjas = kpis["n_naranjas"]
+    total_al = kpis["total_alertas"]
 
-    st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+    if n_rojas > 0:
+        hero_bg = "linear-gradient(135deg, #DC2626 0%, #991B1B 100%)"
+        hero_icon = "!"
+        hero_title = f"{n_rojas} municipio{'s' if n_rojas > 1 else ''} en alerta crítica"
+        hero_sub = (f"{n_naranjas} adicional{'es' if n_naranjas > 1 else ''} en monitoreo · "
+                    f"Semana epidemiológica {semana:02d} de {anio}")
+    elif n_naranjas > 0:
+        hero_bg = "linear-gradient(135deg, #D97706 0%, #92400E 100%)"
+        hero_icon = "!"
+        hero_title = f"{n_naranjas} municipio{'s' if n_naranjas > 1 else ''} en monitoreo"
+        hero_sub = f"Sin alertas críticas · Semana epidemiológica {semana:02d} de {anio}"
+    else:
+        hero_bg = "linear-gradient(135deg, #16A34A 0%, #15803D 100%)"
+        hero_icon = "&#10003;"
+        hero_title = "Territorio en rango normal"
+        hero_sub = f"103 municipios monitoreados · Semana epidemiológica {semana:02d} de {anio}"
+
+    st.markdown(f"""
+    <div style='background:{hero_bg};border-radius:12px;padding:20px 24px;
+                margin-bottom:16px;display:flex;align-items:center;gap:16px;'>
+        <div style='width:44px;height:44px;background:rgba(255,255,255,0.2);
+                    border-radius:10px;display:flex;align-items:center;
+                    justify-content:center;font-size:1.3rem;font-weight:700;
+                    color:white;'>{hero_icon}</div>
+        <div>
+            <div style='font-size:1.2rem;font-weight:700;color:white;
+                        line-height:1.3;'>{hero_title}</div>
+            <div style='font-size:0.82rem;color:rgba(255,255,255,0.85);
+                        margin-top:2px;'>{hero_sub}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # KPI row
     c1, c2, c3, c4, c5 = st.columns(5)
@@ -255,7 +249,7 @@ def render(anio: int, semana: int):
         if n_con == 0:
             st.warning(
                 f"No hay datos en la API para {anio}-W{semana:02d}. "
-                "Prueba cambiando la semana o el año en el sidebar."
+                "Cambia la semana o el año en el panel lateral."
             )
         elif n_con < 20:
             st.caption(
@@ -263,7 +257,7 @@ def render(anio: int, semana: int):
                 "El resto se muestra en gris."
             )
 
-        # Inline legend
+        # Leyenda inline
         st.markdown("""
         <div style='display:inline-flex;align-items:center;gap:14px;
                     font-size:0.78rem;color:#64748B;margin-bottom:6px;'>
@@ -282,83 +276,96 @@ def render(anio: int, semana: int):
         </div>
         """, unsafe_allow_html=True)
 
-        # Build map — ONE GeoJson layer, not 125
-        # --- NUEVA LÓGICA DE MAPA OPTIMIZADA ---
-        m = folium.Map(location=ANTIOQUIA_CENTER, zoom_start=ANTIOQUIA_ZOOM, tiles="CartoDB positron")
+        # Build map — ONE GeoJson layer
+        m = folium.Map(
+            location=ANTIOQUIA_CENTER,
+            zoom_start=ANTIOQUIA_ZOOM,
+            tiles="CartoDB positron",
+        )
 
-        mun_alerta = {a["codigo_dane"]: a["nivel_alerta"] for a in alrts.get("alertas", [])}
+        mun_alerta = {
+            a["codigo_dane"]: a["nivel_alerta"]
+            for a in alrts.get("alertas", [])
+        }
 
         if enriched_geojson and enriched_geojson.get("features"):
-            # 1. Definir función de estilo única (arregla el bug del color blanco)
             def get_style(feature):
                 ipt = feature["properties"].get("ipt_score")
                 return {
                     "fillColor": _color_ipt(ipt),
-                    "color": "#1A2332", # Borde oscuro para que se vean bien
+                    "color": "#1A2332",
                     "weight": 1,
-                    "fillOpacity": 0.75
+                    "fillOpacity": 0.75,
                 }
 
-            # 2. Agregar UNA SOLA CAPA en lugar de 125 iteraciones (Rendimiento extremo)
             folium.GeoJson(
                 enriched_geojson,
                 style_function=get_style,
                 tooltip=folium.GeoJsonTooltip(
                     fields=["nombre", "ipt_score", "nivel_riesgo", "casos_ira_total"],
-                    aliases=["Municipio:", "IPT Score:", "Nivel de Riesgo:", "Casos IRA:"],
+                    aliases=["Municipio:", "IPT:", "Nivel:", "Casos IRA:"],
                     localize=True,
-                    style="font-family: sans-serif; font-size: 13px; font-weight: bold;"
-                )
+                    style="font-family:sans-serif;font-size:13px;font-weight:bold;",
+                ),
             ).add_to(m)
 
-            # 3. Solo iteramos para poner los íconos de advertencia en los municipios en alerta
+            # Marcadores de alerta (solo municipios con alerta activa)
             for feat in enriched_geojson["features"]:
                 cod = feat["properties"].get("codigo_dane")
                 al = mun_alerta.get(cod)
                 if al:
                     try:
                         geom = feat["geometry"]
-                        coords = geom["coordinates"][0][0] if geom["type"] == "MultiPolygon" else geom["coordinates"][0]
+                        coords = (
+                            geom["coordinates"][0][0]
+                            if geom["type"] == "MultiPolygon"
+                            else geom["coordinates"][0]
+                        )
                         lat_c = sum(c[1] for c in coords) / len(coords)
                         lon_c = sum(c[0] for c in coords) / len(coords)
                         color_icon = "red" if al == "ALERTA_ROJA" else "orange"
                         folium.Marker(
                             [lat_c, lon_c],
                             icon=folium.DivIcon(
-                                html=f'<div style="font-size:18px;color:{color_icon}; text-shadow: 1px 1px 2px black;">⚠</div>',
-                                icon_size=(20,20), icon_anchor=(10,10)
+                                html=(
+                                    f'<div style="font-size:16px;color:{color_icon};'
+                                    f'text-shadow:1px 1px 2px rgba(0,0,0,0.5);'
+                                    f'font-weight:bold;">!</div>'
+                                ),
+                                icon_size=(20, 20),
+                                icon_anchor=(10, 10),
                             ),
-                            tooltip=f"⚠ {al} — {feat['properties'].get('nombre')}"
+                            tooltip=f"{al.replace('ALERTA_', '')} — {feat['properties'].get('nombre')}",
                         ).add_to(m)
                     except Exception:
                         pass
 
-            # Leyenda
+            # Leyenda dentro del mapa
             folium.Element("""
             <div style='position:fixed;bottom:24px;left:24px;z-index:9999;
                         background:white;padding:10px 14px;border-radius:6px;
                         border:1px solid #ddd;font-family:sans-serif;font-size:12px;
                         box-shadow:2px 2px 6px rgba(0,0,0,0.15)'>
-                <b>IPT — Riesgo</b><br>
-                <span style='color:#375623; font-size:16px;'>■</span> BAJO (0-33)<br>
-                <span style='color:#FFC000; font-size:16px;'>■</span> MEDIO (33-66)<br>
-                <span style='color:#C00000; font-size:16px;'>■</span> ALTO (66-100)<br>
-                <span style='color:#AAAAAA; font-size:16px;'>■</span> Sin datos<br>
-                <span style='color:red; font-size:16px;'>⚠</span> Alerta activa
+                <b>IPT — Nivel de riesgo</b><br>
+                <span style='color:#22C55E;font-size:14px;'>&#9632;</span> BAJO (0–33)<br>
+                <span style='color:#F59E0B;font-size:14px;'>&#9632;</span> MEDIO (33–66)<br>
+                <span style='color:#EF4444;font-size:14px;'>&#9632;</span> ALTO (66–100)<br>
+                <span style='color:#CBD5E1;font-size:14px;'>&#9632;</span> Sin datos<br>
+                <b style='color:red;'>!</b> Alerta activa
             </div>
             """).add_to(m.get_root().html)
 
-        # Usar width="stretch" para quitar la advertencia amarilla
         st_folium(m, height=500, width="stretch", returned_objects=[])
 
-    # Alerts panel
+    # Panel derecho: alertas activas O municipios a vigilar
     with col_panel:
-        st.markdown(
-            "<div class='section-title'>Alertas recientes</div>",
-            unsafe_allow_html=True,
-        )
         alertas_list = alrts.get("alertas", [])
         if alertas_list:
+            # Hay alertas → mostrar detalle de cada una
+            st.markdown(
+                "<div class='section-title'>Alertas activas</div>",
+                unsafe_allow_html=True,
+            )
             for a in alertas_list[:8]:
                 nivel = a["nivel_alerta"]
                 cls = "danger" if "ROJA" in nivel else "watch" if "NARANJA" in nivel else "normal"
@@ -381,21 +388,64 @@ def render(anio: int, semana: int):
                             <div class='pred-value'>{pred:.1f}</div>
                         </div>
                         <div>
-                            <div class='pred-label'>Δ histórico</div>
+                            <div class='pred-label'>Desviación</div>
                             <div class='pred-value {"pred-delta-pos" if desv > 0 else "pred-delta-neg"}'>{desv:+.1f}%</div>
                         </div>
                     </div>
-                    <div class='causal-tag'>{var}</div>
+                    <div class='causal-tag'>Causa: {var}</div>
                 </div>
                 """, unsafe_allow_html=True)
         else:
-            st.markdown("""
-            <div class='empty-state'>
-                <div class='empty-state-icon'>🟢</div>
-                <div class='empty-state-title'>Territorio seguro</div>
-                <div class='empty-state-text'>
-                    No hay alertas preventivas activas en este período.<br>
-                    Todos los municipios están dentro de los rangos esperados.
+            # Sin alertas → mostrar municipios con IPT más alto (vigilancia preventiva)
+            st.markdown(
+                "<div class='section-title'>Municipios a vigilar</div>",
+                unsafe_allow_html=True,
+            )
+            st.caption("Mayor IPT este período — sin alerta activa")
+
+            mun_ipt = []
+            for feat in enriched_geojson.get("features", []):
+                p = feat["properties"]
+                ipt_val = p.get("ipt_score")
+                if ipt_val is not None:
+                    mun_ipt.append({
+                        "nombre": p.get("nombre", ""),
+                        "subregion": p.get("subregion", ""),
+                        "ipt": ipt_val,
+                        "nivel": p.get("nivel_riesgo", ""),
+                        "casos": p.get("casos_ira_total", "—"),
+                    })
+
+            mun_ipt.sort(key=lambda x: x["ipt"], reverse=True)
+
+            for mi in mun_ipt[:6]:
+                ipt_v = mi["ipt"]
+                if ipt_v >= 66:
+                    cls = "danger"
+                elif ipt_v >= 33:
+                    cls = "watch"
+                else:
+                    cls = "normal"
+
+                st.markdown(f"""
+                <div class='alerta-card {cls}'>
+                    <div style='display:flex;justify-content:space-between;
+                                align-items:flex-start;margin-bottom:4px;'>
+                        <div>
+                            <div class='alerta-municipio'>{mi['nombre']}</div>
+                            <div class='alerta-sub'>{mi['subregion']}</div>
+                        </div>
+                        <span class='nivel-badge {cls}'>{mi['nivel']}</span>
+                    </div>
+                    <div class='pred-grid'>
+                        <div>
+                            <div class='pred-label'>IPT</div>
+                            <div class='pred-value'>{ipt_v:.1f}</div>
+                        </div>
+                        <div>
+                            <div class='pred-label'>Casos IRA</div>
+                            <div class='pred-value'>{mi['casos']}</div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            """, unsafe_allow_html=True)
+                """, unsafe_allow_html=True)

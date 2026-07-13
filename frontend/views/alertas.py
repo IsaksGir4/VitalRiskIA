@@ -1,9 +1,9 @@
-"""Alertas preventivas + Predicción en vivo (1 clic).
+"""Alertas preventivas + Predicción en vivo — layout 2 columnas.
 
-FIX v3:
-- Predicción: usuario solo elige municipio del dropdown → 1 clic
-- Empty state atractivo cuando no hay alertas
-- El backend llena los datos automáticamente desde la BD
+Cambios v4 (sustentación):
+- Tabs eliminados → 2 columnas (alertas | predicción) visibles al mismo tiempo
+- Emojis casuales reemplazados por indicadores CSS
+- Predicción: 1 clic, backend autocompleta features desde BD
 """
 import streamlit as st
 import requests
@@ -43,23 +43,12 @@ def _historial(cod, anio):
         return None
 
 
-def _prediccion_live(cod, semana, anio):
-    """Call prediction with only codigo_dane + semana + anio.
-    The backend fills missing features from the database automatically."""
-    try:
-        payload = {"codigo_dane": cod, "semana_epi": semana, "anio": anio}
-        r = requests.post(f"{API}/prediccion/", json=payload, timeout=10)
-        return r.json() if r.status_code == 200 else None
-    except Exception:
-        return None
-
-
 def render(anio: int, semana: int):
     st.markdown("""
-    <p class='page-title'>Alertas preventivas</p>
+    <p class='page-title'>Alertas preventivas y predicción</p>
     <p class='page-subtitle'>
-        Municipios con desviación significativa sobre la media histórica ·
-        Umbral NARANJA: +30% · Umbral ROJO: +60%
+        Detección de desviaciones significativas sobre la media histórica ·
+        Predicción XGBoost en tiempo de consulta
     </p>
     """, unsafe_allow_html=True)
 
@@ -72,7 +61,7 @@ def render(anio: int, semana: int):
     rojas = [a for a in alertas if "ROJA" in a["nivel_alerta"]]
     naranjas = [a for a in alertas if "NARANJA" in a["nivel_alerta"]]
 
-    # KPIs
+    # KPIs — sin emojis, colores semánticos
     c1, c2, c3, c4 = st.columns(4)
     for col, label, val, color in [
         (c1, "Alertas críticas (ROJA)", str(len(rojas)), "#DC2626"),
@@ -90,29 +79,37 @@ def render(anio: int, semana: int):
 
     st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
 
-    tab_alertas, tab_prediccion = st.tabs(["Alertas activas", "Predicción en vivo"])
+    # ── Layout 2 columnas: Alertas activas | Predicción en vivo ──
+    col_alertas, col_prediccion = st.columns([1.3, 1])
 
-    # ── Tab: Alertas activas ──────────────────────────────
-    with tab_alertas:
+    # ── Columna izquierda: Alertas activas ────────────────
+    with col_alertas:
+        st.markdown(
+            "<div class='section-title'>Alertas activas</div>",
+            unsafe_allow_html=True,
+        )
+        st.caption("Umbral NARANJA: +30% · ROJA: +60% sobre media histórica")
+
         if not alertas:
             st.markdown("""
             <div class='empty-state'>
-                <div class='empty-state-icon'>🟢</div>
-                <div class='empty-state-title'>Territorio seguro</div>
+                <div class='empty-state-icon'>
+                    <span style='display:inline-block;width:32px;height:32px;
+                          background:#16A34A;border-radius:50%;'></span>
+                </div>
+                <div class='empty-state-title'>Territorio en rango normal</div>
                 <div class='empty-state-text'>
                     No hay alertas preventivas activas en este período.<br>
                     Los 103 municipios monitoreados están dentro de los rangos
-                    esperados según el modelo XGBoost.<br><br>
-                    <span style='font-size:0.78rem;color:#166534;'>
-                        Umbrales: NARANJA &gt; +30% · ROJA &gt; +60% sobre media histórica
-                    </span>
+                    esperados según el modelo XGBoost.
                 </div>
             </div>
             """, unsafe_allow_html=True)
         else:
-            for i in range(0, len(alertas), 2):
-                cols = st.columns(2)
-                for j, col in enumerate(cols):
+            # Mostrar alertas en sub-columnas de 2
+            for i in range(0, min(len(alertas), 6), 2):
+                sub_cols = st.columns(2)
+                for j, sub_col in enumerate(sub_cols):
                     if i + j >= len(alertas):
                         break
                     a = alertas[i + j]
@@ -124,7 +121,7 @@ def render(anio: int, semana: int):
                     var = a.get("variable_causal", "N/D")
                     media = a.get("media_historica") or 0
 
-                    with col:
+                    with sub_col:
                         st.markdown(f"""
                         <div class='alerta-card {cls}'>
                             <div style='display:flex;justify-content:space-between;
@@ -148,122 +145,176 @@ def render(anio: int, semana: int):
                                     </div>
                                 </div>
                                 <div>
-                                    <div class='pred-label'>Δ vs histórico</div>
+                                    <div class='pred-label'>Desviación</div>
                                     <div class='pred-value {"pred-delta-pos" if desv > 0 else "pred-delta-neg"}'>
                                         {desv:+.1f}%
                                     </div>
                                 </div>
                             </div>
                             <div style='font-size:0.75rem;color:#64748B;margin-bottom:6px;'>
-                                Media histórica: {media:.1f} casos/semana
+                                Media histórica: {media:.1f} casos/sem
                             </div>
-                            <div class='causal-tag'>Variable causal: {var}</div>
+                            <div class='causal-tag'>Causa principal: {var}</div>
                         </div>
                         """, unsafe_allow_html=True)
 
-    # ── Tab: Predicción en vivo (1 clic) ──────────────────
-    # ── Tab 2: Predicción Automática ──────────────────────────
-    with tab_prediccion:
+            if len(alertas) > 6:
+                st.caption(f"Mostrando 6 de {len(alertas)} alertas. "
+                           "Consulta el historial completo en Datos Abiertos.")
+
+    # ── Columna derecha: Predicción en vivo ────────────────
+    with col_prediccion:
         st.markdown(
-            "<div class='section-title'>Predicción Automática XGBoost</div>",
-            unsafe_allow_html=True
+            "<div class='section-title'>Predicción XGBoost en vivo</div>",
+            unsafe_allow_html=True,
         )
-        st.caption("Selecciona un municipio para predecir el comportamiento de la siguiente semana basándose en la data histórica más reciente.")
+        st.caption(
+            "Selecciona un municipio del Valle de Aburrá. "
+            "El backend autocompleta las features desde la BD."
+        )
 
-        col_form, col_result = st.columns([1, 1])
+        with st.form("prediccion_form"):
+            mun_elegido = st.selectbox(
+                "Municipio",
+                options=list(MUNICIPIOS_VA.keys()),
+                format_func=lambda x: f"{MUNICIPIOS_VA[x]} ({x})",
+            )
+            submit = st.form_submit_button(
+                "Ejecutar predicción", use_container_width=True, type="primary"
+            )
 
-        with col_form:
-            with st.form("prediccion_form"):
-                # Dropdown de municipios
-                mun_elegido = st.selectbox("Seleccionar Municipio", options=list(MUNICIPIOS_VA.keys()), format_func=lambda x: f"{MUNICIPIOS_VA[x]} ({x})")
-                
-                submit = st.form_submit_button("🔮 Ejecutar Predicción En Vivo", use_container_width=True)
+        if submit:
+            with st.spinner("Conectando con XGBoost..."):
+                try:
+                    payload = {"codigo_dane": mun_elegido, "semana_epi": semana, "anio": anio}
+                    r = requests.post(f"{API}/prediccion/", json=payload, timeout=10)
+                    result = r.json() if r.status_code == 200 else None
+                except Exception:
+                    result = None
 
-        with col_result:
-            if submit:
-                with st.spinner("Conectando con XGBoost..."):
-                    # Solo enviamos el código y la fecha, el backend autocompleta con datos de la BD o promedios
-                    try:
-                        payload = {"codigo_dane": mun_elegido, "semana_epi": semana, "anio": anio}
-                        r = requests.post(f"{API}/prediccion/", json=payload, timeout=10)
-                        result = r.json() if r.status_code == 200 else None
-                    except Exception:
-                        result = None
+            if result:
+                nivel = result.get("nivel_alerta", "")
+                is_roja = "ROJA" in nivel
+                is_naranja = "NARANJA" in nivel
+                border_color = "#DC2626" if is_roja else "#D97706" if is_naranja else "#16A34A"
+                pred = result.get("prediccion_casos_t1", 0)
+                desv = result.get("desviacion_pct", 0) or 0
+                var = result.get("variable_causal", "N/D")
 
-                if result:
-                    nivel = result.get("nivel_alerta","")
-                    cls = "roja" if "ROJA" in nivel else "naranja" if "NARANJA" in nivel else "verde"
-                    pred = result.get("prediccion_casos_t1", 0)
-                    desv = result.get("desviacion_pct", 0) or 0
-                    var = result.get("variable_causal","N/D")
-
-                    st.markdown(f"""
-                    <div style='background:white; border-left: 5px solid {"#DC2626" if cls=="roja" else "#D97706" if cls=="naranja" else "#16A34A"}; padding:15px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1);'>
-                        <h3 style='margin:0; color:#1A2332;'>Resultado: {MUNICIPIOS_VA[mun_elegido]}</h3>
-                        <p style='font-size:2.5rem; font-weight:bold; margin:10px 0; color:#1A5F7A;'>{pred:.1f} <span style='font-size:1rem; font-weight:normal;'>casos (t+1)</span></p>
-                        <p><b>Estado:</b> {nivel.replace('ALERTA_','')}</p>
-                        <p><b>Desviación Histórica:</b> {desv:+.1f}%</p>
-                        <p style='background:#E8F4F8; padding:5px; border-radius:4px;'><b>Causa principal (SHAP):</b> ⚠ {var}</p>
+                st.markdown(f"""
+                <div style='background:white; border-left:5px solid {border_color};
+                            padding:16px; border-radius:8px;
+                            box-shadow:0 2px 4px rgba(0,0,0,0.08);'>
+                    <div style='font-size:1rem;font-weight:700;color:#1A2332;
+                                margin-bottom:12px;'>
+                        Resultado: {MUNICIPIOS_VA[mun_elegido]}
                     </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.error("Error al conectar con la API de predicción.")
+                    <div style='font-size:2.2rem;font-weight:700;color:#1A5F7A;
+                                margin-bottom:8px;'>
+                        {pred:.1f}
+                        <span style='font-size:0.9rem;font-weight:400;color:#64748B;'>
+                            casos predichos (t+1)</span>
+                    </div>
+                    <div class='pred-grid'>
+                        <div>
+                            <div class='pred-label'>Estado</div>
+                            <div style='font-weight:600;color:{border_color};'>
+                                {nivel.replace('ALERTA_', '')}</div>
+                        </div>
+                        <div>
+                            <div class='pred-label'>Desviación histórica</div>
+                            <div class='pred-value {"pred-delta-pos" if desv > 0 else "pred-delta-neg"}'
+                                 style='font-size:1.1rem;'>
+                                {desv:+.1f}%</div>
+                        </div>
+                    </div>
+                    <div class='causal-tag' style='margin-top:12px;'>
+                        Causa principal (SHAP): {var}</div>
+                </div>
+                """, unsafe_allow_html=True)
             else:
-                st.info("👈 Selecciona un municipio y haz clic en Predecir.")
+                st.error("No se pudo conectar con la API de predicción. "
+                         "Verifica que el backend esté activo.")
+        else:
+            st.markdown("""
+            <div style='background:#F7F8FA;border:1px dashed #CBD5E1;
+                        border-radius:8px;padding:24px;text-align:center;
+                        color:#64748B;font-size:0.85rem;'>
+                Selecciona un municipio y ejecuta la predicción para ver
+                el resultado del modelo XGBoost con datos reales de la BD.
+            </div>
+            """, unsafe_allow_html=True)
 
 
 def render_perfil(anio: int, semana: int):
     st.markdown("""
     <p class='page-title'>Perfil epidemiológico por municipio</p>
-    <p class='page-subtitle'>Historial de alertas y contexto socioeconómico</p>
+    <p class='page-subtitle'>
+        Historial de alertas, tendencias y contexto socioeconómico por municipio
+    </p>
     """, unsafe_allow_html=True)
 
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
 
-    c1, c2 = st.columns([1, 2])
-    with c1:
+    col_select, col_anio = st.columns([2, 1])
+    with col_select:
         mun_options = {f"{v} ({k})": k for k, v in MUNICIPIOS_VA.items()}
         mun_sel = st.selectbox(
-            "Municipio",
-            options=list(mun_options.keys()),
-            index=0,
-            key="perfil_mun",
+            "Municipio", options=list(mun_options.keys()), index=0, key="perfil_mun",
         )
         cod = mun_options[mun_sel]
-    with c2:
+    with col_anio:
         anio_h = st.selectbox(
             "Año", [2023, 2022, 2021, 2020, 2019, 2018], key="perfil_anio"
         )
 
-    if st.button("Ver perfil", type="primary"):
+    if st.button("Consultar perfil", type="primary"):
         with st.spinner("Cargando historial..."):
             hist = _historial(cod.zfill(5), anio_h)
 
         if hist:
             res = hist.get("resumen_alertas", {})
-            st.markdown(f"""
-            <div style='background:#E8F4F8;border-radius:8px;
-                        padding:12px 16px;margin-bottom:14px;
-                        border-left:4px solid #1A5F7A;'>
-                <strong style='font-size:1rem;color:#1A2332;'>
-                    {hist.get('nombre', mun_sel)}
-                </strong>
-                <span style='font-size:0.8rem;color:#64748B;margin-left:8px;'>
-                    {hist.get('total_semanas', 0)} semanas registradas
-                </span>
-                <div style='margin-top:6px;display:flex;gap:16px;font-size:0.82rem;'>
-                    <span style='color:#DC2626;font-weight:600;'>
-                        {res.get('ALERTA_ROJA', 0)} críticas
-                    </span>
-                    <span style='color:#D97706;font-weight:600;'>
-                        {res.get('ALERTA_NARANJA', 0)} monitoreo
-                    </span>
-                    <span style='color:#16A34A;font-weight:600;'>
-                        {res.get('ALERTA_VERDE', 0)} normales
-                    </span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            n_rojas = res.get("ALERTA_ROJA", 0)
+            n_naranjas = res.get("ALERTA_NARANJA", 0)
+            n_verdes = res.get("ALERTA_VERDE", 0)
+            total_sem = hist.get("total_semanas", 0)
+
+            # KPIs del municipio
+            k1, k2, k3, k4 = st.columns(4)
+            with k1:
+                st.markdown(f"""
+                <div class='kpi-card'>
+                    <div class='kpi-label'>Semanas registradas</div>
+                    <div class='kpi-value' style='color:#1A5F7A;'>{total_sem}</div>
+                </div>""", unsafe_allow_html=True)
+            with k2:
+                st.markdown(f"""
+                <div class='kpi-card'>
+                    <div class='kpi-label'>Alertas críticas</div>
+                    <div class='kpi-value' style='color:#DC2626;'>{n_rojas}</div>
+                </div>""", unsafe_allow_html=True)
+            with k3:
+                st.markdown(f"""
+                <div class='kpi-card'>
+                    <div class='kpi-label'>Alertas monitoreo</div>
+                    <div class='kpi-value' style='color:#D97706;'>{n_naranjas}</div>
+                </div>""", unsafe_allow_html=True)
+            with k4:
+                pct_normal = (n_verdes / total_sem * 100) if total_sem > 0 else 0
+                st.markdown(f"""
+                <div class='kpi-card'>
+                    <div class='kpi-label'>Semanas normales</div>
+                    <div class='kpi-value' style='color:#16A34A;'>{pct_normal:.0f}%</div>
+                    <div class='kpi-hint'>{n_verdes} de {total_sem} semanas</div>
+                </div>""", unsafe_allow_html=True)
+
+            st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+
+            # Tabla de historial
+            st.markdown(
+                "<div class='section-title'>Historial semanal de alertas</div>",
+                unsafe_allow_html=True,
+            )
 
             df = pd.DataFrame(hist.get("alertas", []))
             if not df.empty:
@@ -280,9 +331,9 @@ def render_perfil(anio: int, semana: int):
 
                 st.dataframe(
                     df[cols_ok].style.map(color_nivel, subset=["nivel_alerta"]),
-                    width="stretch",
+                    use_container_width=True,
                     hide_index=True,
                     height=420,
                 )
         else:
-            st.warning(f"No se encontró historial para {mun_sel}.")
+            st.warning(f"No se encontró historial para {mun_sel} en {anio_h}.")

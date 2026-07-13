@@ -1,9 +1,7 @@
 """Portal de Datos Abiertos — descargas CSV + metadatos.
 
-FIX v3:
-- Table overflow fixed with word-wrap CSS
-- Alertas preview defaults to showing IPT data as fallback
-- Better error handling
+Transparencia y reproducibilidad del pipeline de datos VitalRisk AI.
+Alineado con estándar de publicación de datos.gov.co.
 """
 import streamlit as st
 import requests
@@ -42,7 +40,10 @@ def _load_preview(endpoint: str, max_rows: int = 50):
 def render():
     st.markdown("""
     <p class='page-title'>Portal de Datos Abiertos</p>
-    <p class='page-subtitle'>Transparencia de datos — estándar SaluData Bogotá</p>
+    <p class='page-subtitle'>
+        Transparencia y reproducibilidad — datos descargables en formato CSV
+        alineados con el estándar de datos.gov.co
+    </p>
     """, unsafe_allow_html=True)
 
     st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
@@ -67,10 +68,10 @@ def render():
         col_desc, col_dl = st.columns([3, 1])
         with col_desc:
             st.markdown(
-                "**¿Qué contiene este dataset?** "
-                "Datos semanales por municipio que integran casos de IRA (SIVIGILA), "
-                "calidad del aire PM2.5 (IDEAM), variables meteorológicas y "
-                "el Índice Preventivo Territorial calculado por VitalRisk AI."
+                "**Contenido:** Datos semanales por municipio que integran "
+                "casos de IRA (SIVIGILA), calidad del aire PM2.5 (IDEAM), "
+                "variables meteorológicas y el Índice Preventivo Territorial "
+                "calculado por VitalRisk AI."
             )
         with col_dl:
             with st.spinner("Preparando..."):
@@ -81,7 +82,7 @@ def render():
                     data=csv_ipt,
                     file_name="vitalrisk_ipt_antioquia_2018_2023.csv",
                     mime="text/csv",
-                    width="stretch",
+                    use_container_width=True,
                 )
             else:
                 st.error("API no disponible para descarga")
@@ -91,9 +92,7 @@ def render():
         with st.spinner("Cargando..."):
             df = _load_preview("ipt")
         if df is not None:
-            st.dataframe(
-                df.head(50), width="stretch", hide_index=True,
-            )
+            st.dataframe(df.head(50), use_container_width=True, hide_index=True)
             st.caption(f"Total: {len(df):,} registros en el dataset completo")
         else:
             st.warning("No se pudo cargar la vista previa del dataset IPT.")
@@ -107,7 +106,7 @@ def render():
             unsafe_allow_html=True,
         )
         st.caption(
-            "807 alertas generadas · Modelo XGBoost + SHAP · "
+            "807+ alertas generadas · Modelo XGBoost + SHAP · "
             "Umbral NARANJA: +30% | ROJA: +60% sobre media histórica"
         )
 
@@ -121,13 +120,12 @@ def render():
                     data=csv_alertas,
                     file_name="vitalrisk_alertas_antioquia_2018_2023.csv",
                     mime="text/csv",
-                    width="stretch",
+                    use_container_width=True,
                 )
             else:
                 st.error(
                     "API no disponible. Verifica que el endpoint "
-                    "`/opendata/alertas` esté activo y que `alertas_territoriales` "
-                    "esté cargada en la BD (ejecuta `python etl/load_to_db.py`)."
+                    "`/opendata/alertas` esté activo."
                 )
 
         st.divider()
@@ -145,17 +143,15 @@ def render():
             if "nivel_alerta" in df_a.columns:
                 st.dataframe(
                     df_a.head(50).style.map(color_alerta, subset=["nivel_alerta"]),
-                    width="stretch", hide_index=True,
+                    use_container_width=True, hide_index=True,
                 )
             else:
-                st.dataframe(df_a.head(50), width="stretch", hide_index=True)
+                st.dataframe(df_a.head(50), use_container_width=True, hide_index=True)
             st.caption(f"Total: {len(df_a):,} registros en el historial completo")
         else:
             st.info(
                 "No se pudo cargar la vista previa de alertas. "
-                "Esto puede ocurrir si la tabla `alertas_territoriales` aún no "
-                "fue cargada en la BD. Ejecuta `python etl/load_to_db.py` "
-                "para cargar el paso 7."
+                "Esto puede ocurrir si la tabla aún no fue cargada en la BD."
             )
 
     # ── Tab Metadatos ─────────────────────────────────────
@@ -193,19 +189,16 @@ def render():
 
             st.divider()
 
-            # Variables table
             st.markdown("**Variables del dataset:**")
             variables = meta.get("variables", [])
             if variables:
                 df_vars = pd.DataFrame(variables)
-                # Truncate descriptions to prevent overflow
                 if "descripcion" in df_vars.columns:
                     df_vars["descripcion"] = df_vars["descripcion"].apply(
                         lambda x: x[:80] + "…" if isinstance(x, str) and len(x) > 80 else x
                     )
                 st.dataframe(
-                    df_vars, width="stretch", hide_index=True,
-                    height=350,
+                    df_vars, use_container_width=True, hide_index=True, height=350,
                 )
 
             nota = meta.get("nota_metodologica", "")

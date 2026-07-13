@@ -21,12 +21,12 @@ Tabla central del sistema (Feature Store). Una fila por municipio × semana epid
 | pm25_lag1 | NUMERIC | 5-45 µg/m³ | Calculado | PM2.5 de la semana t-1 (exposición reciente) |
 | pm25_lag2 | NUMERIC | 5-45 µg/m³ | Calculado | PM2.5 de la semana t-2 (exposición acumulada) |
 | casos_ira_lag1 | INTEGER | 0-15 | Calculado | Casos IRA de la semana t-1 (autocorrelación r=0.852) |
-| icv_score | NUMERIC | 0-100 | DANE ECV 2023 | Índice de Condiciones de Vida |
-| ipm_pct | NUMERIC | 0-100 % | DANE ECV 2023 | Índice de Pobreza Multidimensional |
-| icv_hacinamiento | NUMERIC | 0-100 | DANE ECV 2023 | Componente hacinamiento del ICV |
-| icv_seg_social | NUMERIC | 0-15 | DANE ECV 2023 | Seguridad social jefe del hogar (r=0.418 con IRA — mayor feature socioecon.) |
-| icv_paredes | NUMERIC | 0-100 | DANE ECV 2023 | D4 V3 — Paredes de material no adecuado |
-| icv_pisos | NUMERIC | 0-100 | DANE ECV 2023 | D4 V4 — Pisos de material no adecuado |
+| icv_score | NUMERIC | 0-100 | Gobernación de Antioquia ECV 2023 | Índice de Condiciones de Vida |
+| ipm_pct | NUMERIC | 0-100 % | Gobernación de Antioquia ECV 2023 | Índice de Pobreza Multidimensional |
+| icv_hacinamiento | NUMERIC | 0-100 | Gobernación de Antioquia ECV 2023 | Componente hacinamiento del ICV |
+| icv_seg_social | NUMERIC | 0-15 | Gobernación de Antioquia ECV 2023 | Seguridad social jefe del hogar (r=0.418 con IRA — mayor feature socioecon.) |
+| icv_paredes | NUMERIC | 0-100 | Gobernación de Antioquia ECV 2023 | D4 V3 — Paredes de material no adecuado |
+| icv_pisos | NUMERIC | 0-100 | Gobernación de Antioquia ECV 2023 | D4 V4 — Pisos de material no adecuado |
 | periodo_pandemia | BOOLEAN | TRUE/FALSE | Calculado | TRUE: 2020-03-01 a 2021-12-31 (COVID-19). Justificado: Mann-Whitney p<0.001 |
 | ipt_score | NUMERIC | 0-100 | Calculado HU11 | Índice Preventivo Territorial (ver fórmula abajo) |
 | nivel_riesgo | VARCHAR(10) | BAJO/MEDIO/ALTO | Calculado HU11 | BAJO (0-33) · MEDIO (34-66) · ALTO (67-100) |
@@ -66,7 +66,7 @@ Dimensión estática con datos socioeconómicos y geometría de cada municipio.
 | departamento | VARCHAR | DANE | Siempre "Antioquia" en este proyecto |
 | subregion | VARCHAR | Gobernación | Ej. "Valle de Aburrá", "Urabá", "Oriente" |
 | geometria | GEOMETRY(MultiPolygon,4326) | DANE MGN 2025 | Polígono del municipio en EPSG:4326 |
-| icv_score, nbi, ipm_pct, icv_hacinamiento, icv_menores_6, icv_seg_social, pct_vivienda_acueducto, icv_paredes, icv_pisos | NUMERIC | DANE ECV Antioquia 2023 | 9 indicadores socioeconómicos invariantes (Zona=Total) |
+| icv_score, nbi, ipm_pct, icv_hacinamiento, icv_menores_6, icv_seg_social, pct_vivienda_acueducto, icv_paredes, icv_pisos | NUMERIC | Gobernación de Antioquia ECV Antioquia 2023 | 9 indicadores socioeconómicos invariantes (Zona=Total) |
 | poblacion_2023 | INTEGER | DANE CNPV 2018 | Población proyectada 2023 (referencia rápida sin JOIN) |
 
 ## Tabla: dim_poblacion_anual

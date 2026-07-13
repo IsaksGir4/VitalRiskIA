@@ -38,7 +38,7 @@ Cada año, las Infecciones Respiratorias Agudas (IRA) generan miles de consultas
 - **Calidad del aire** — PM2.5 y PM10 desde IDEAM SISAIRE (API Socrata `g4t8-zkc3`)
 - **Variables meteorológicas** — Humedad, temperatura, precipitación y presión (4 APIs IDEAM DHIME)
 - **Epidemiología** — Casos IRA semanales desde SIVIGILA/INS (2018-2023, evento 345)
-- **Vulnerabilidad socioeconómica** — ECV Antioquia 2023 (DANE): ICV, NBI, IPM, hacinamiento
+- **Vulnerabilidad socioeconómica** — ECV Antioquia 2023 (Gobernación de Antioquia): ICV, NBI, IPM, hacinamiento
 - **Demografía** — Proyecciones poblacionales DANE 2018-2042 (denominador de tasas por año)
 
 El sistema calcula un **Índice Preventivo Territorial (IPT)** por municipio y genera alertas preventivas explicables mediante **SHAP**, identificando qué variable ambiental o socioeconómica causó cada alerta.
@@ -129,7 +129,7 @@ Pipeline activado por `POST /api/v1/etl/sincronizar` que conecta a 5 APIs Socrat
 | 4 | IDEAM — Presión atmosférica | [62tk-nxj5](https://www.datos.gov.co/resource/62tk-nxj5) | datos.gov.co | API Socrata |
 | 5 | IDEAM SISAIRE — PM2.5/PM10 | [g4t8-zkc3](https://www.datos.gov.co/resource/g4t8-zkc3) | datos.gov.co | API Socrata |
 | 6 | SIVIGILA/INS — Eventos IRA (evento 345) | Archivos anuales 2018-2023 | ins.gov.co | CSV |
-| 7 | DANE — ECV Antioquia 2023 | Encuesta de Calidad de Vida | antioquiadatos.gov.co | XLSX |
+| 7 | Gobernación de Antioquia — ECV Antioquia 2023 | Encuesta de Calidad de Vida | antioquiadatos.gov.co | XLSX |
 | 8 | DANE — Proyecciones CNPV 2018 | Población 2018-2042 | dane.gov.co | XLSX |
 | 9 | DANE — MGN 2025 | Geometrías municipales | geoportal.dane.gov.co | GeoJSON |
 
