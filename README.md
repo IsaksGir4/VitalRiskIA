@@ -308,9 +308,12 @@ VitalRiskIA/
 │
 ├── docs/
 │   ├── architecture.md              # Diagrama cloud + ERD 7 tablas (Mermaid)
+│   ├── marco_metodologico.md        # Justificacion de la metodologia seleccionada
 │   ├── data_dictionary.md           # Diccionario completo de variables
+│   ├── planteamiento_del_problema.md# Explicacion del problema
 │   ├── fuentes_datos.md             # APIs y archivos con URLs directas
 │   ├── conclusiones.md              # Hallazgos del modelo + limitaciones honestas
+│   ├── smoke_test_hu22.md           # Resumen de resultados al llevar a produccion
 │   ├── validacion_guide.md          # Guía de reproducibilidad para evaluadores
 │   └── arquitecture/                # ADRs
 │       ├── ADR-001-Arquitectura-Base.md
@@ -319,6 +322,7 @@ VitalRiskIA/
 │
 └── tests/                           # Pruebas automatizadas
     ├── test_data_quality.py         # Calidad del Feature Store
+    ├── test_integration_api.py      # Calidad del Feature Store
     └── test_model_inference.py      # Inferencia XGBoost
 ```
 
