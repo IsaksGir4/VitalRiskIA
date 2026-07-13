@@ -191,7 +191,7 @@ def render(anio: int, semana: int):
         hero_sub = f"103 municipios monitoreados · Semana epidemiológica {semana:02d} de {anio}"
 
     st.markdown(f"""
-    <div style='background:{hero_bg};border-radius:12px;padding:20px 24px;
+    <div style='background:{hero_bg};border-radius:0;padding:20px 24px;
                 margin-bottom:16px;display:flex;align-items:center;gap:16px;'>
         <div style='width:44px;height:44px;background:rgba(255,255,255,0.2);
                     border-radius:10px;display:flex;align-items:center;
