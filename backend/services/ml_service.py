@@ -1,6 +1,7 @@
 import pickle
 import numpy as np
 import pandas as pd
+import shap
 from pathlib import Path
 from settings.config import settings
 
@@ -16,11 +17,19 @@ class MLService:
     def __init__(self):
         with open(settings.MODEL_PATH, "rb") as f:
             artefacto = pickle.load(f)
-        self.modelo            = artefacto["modelo"]
-        self.features          = artefacto["features"]
-        self.fill_values       = artefacto["fill_values"]
-        self.feature_importance = artefacto["feature_importance"]
+        self.modelo              = artefacto["modelo"]
+        self.features             = artefacto["features"]
+        self.fill_values          = artefacto["fill_values"]
+        self.feature_importance   = artefacto["feature_importance"]
+
+        # SHAP TreeExplainer se carga UNA sola vez, junto con el modelo.
+        # Esto es lo que permite calcular variable_causal POR INSTANCIA,
+        # igual que en notebooks/08_shap_alertas.ipynb (sección 8.4),
+        # en vez de un valor fijo global.
+        self.explainer = shap.TreeExplainer(self.modelo)
+
         print(f"✓ MLService: modelo cargado ({len(self.features)} features)")
+        print(f"✓ MLService: SHAP TreeExplainer listo")
 
     def predict(self, feature_values: dict) -> tuple[float, str]:
         X = pd.DataFrame([{
@@ -30,12 +39,27 @@ class MLService:
         for feat in self.features:
             if pd.isna(X[feat].iloc[0]) and feat in self.fill_values:
                 X[feat] = self.fill_values[feat]
+
         pred = float(np.clip(self.modelo.predict(X)[0], 0, None))
-        variable_causal = max(
-            self.feature_importance, key=self.feature_importance.get
+
+        # ── variable_causal real, por instancia ──────────────────────
+        # ANTES (bug): max(self.feature_importance, key=...) devolvía
+        # SIEMPRE la misma variable (la de mayor gain global, casos_ira_lag1),
+        # sin importar los datos de entrada de esta predicción específica.
+        #
+        # AHORA: se calcula el SHAP de ESTA fila y se toma el feature con
+        # mayor valor SHAP positivo — la misma definición de get_variable_causal()
+        # que ya usa el histórico cargado en alertas_territoriales.
+        shap_values_fila = self.explainer.shap_values(X)[0]
+        shap_por_feature = dict(zip(self.features, shap_values_fila))
+        positivos = {f: v for f, v in shap_por_feature.items() if v > 0}
+        variable_causal = (
+            max(positivos.items(), key=lambda kv: kv[1])[0]
+            if positivos else "ninguna"
         )
+
         return pred, variable_causal
-    
+
     def get_model_metadata(self) -> dict:
         return {
             "algoritmo": "XGBoost Regressor",

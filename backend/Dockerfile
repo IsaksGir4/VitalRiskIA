@@ -27,4 +27,4 @@ COPY data/processed/clean_municipios.geojson /app/data/processed/clean_municipio
 EXPOSE 8000
 
 # Sin --reload en producción
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

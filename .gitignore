@@ -65,3 +65,5 @@ docker-compose.override.yml
 
 # Streamlit cache
 frontend/.streamlit/secrets.toml
+
+!RECURSOS/**
